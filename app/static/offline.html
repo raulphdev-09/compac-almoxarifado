@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#123e38">
+  <title>Sem conexão · COMPAC</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/offline.css">
+  <script src="/static/offline.js" defer></script>
+</head>
+<body>
+  <main class="offline-card">
+    <img src="/static/icon.svg" width="64" height="64" alt="" aria-hidden="true">
+    <p class="eyebrow">COMPAC · ALMOXARIFADO</p>
+    <h1>Vamos reconectar?</h1>
+    <p>Não foi possível acessar o COMPAC. Verifique sua conexão com a internet e tente novamente.</p>
+    <p class="notice">A consulta de dados e o registro de movimentações precisam de internet. Nenhuma ação foi guardada para envio posterior.</p>
+    <button type="button" data-offline-retry>Tentar novamente <span aria-hidden="true">↗</span></button>
+    <p class="connection" role="status" aria-live="polite" data-connection-status>Verificando conexão…</p>
+    <a href="/">Voltar ao início</a>
+  </main>
+  <footer>Controle de materiais, com tudo no lugar.</footer>
+</body>
+</html>

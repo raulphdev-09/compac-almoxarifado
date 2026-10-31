@@ -1,0 +1,34 @@
+.compac-pwa-layer { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #183b38; }
+.compac-pwa-layer [hidden] { display: none !important; }
+.compac-pwa-status, .compac-pwa-update { position: fixed; z-index: 1100; left: 50%; bottom: max(1rem, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(38rem, calc(100% - 2rem)); box-sizing: border-box; display: flex; align-items: center; gap: .8rem; padding: .9rem 1rem; border: 1px solid #cad7cf; border-radius: 12px; background: #f6f8ed; color: #183b38; box-shadow: 0 8px 36px #143a3226; font-size: .875rem; line-height: 1.5; }
+.compac-pwa-update { bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 5rem)); background: #fff; }
+.compac-pwa-update p { flex: 1; margin: 0; }
+.compac-pwa-status-text { flex: 1; }
+.compac-pwa-layer button { font: inherit; cursor: pointer; }
+.compac-pwa-dismiss, .compac-pwa-update-dismiss, .compac-pwa-dialog-close { flex-shrink: 0; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #3f5f59; font-size: 1.45rem !important; }
+.compac-pwa-dismiss:hover, .compac-pwa-update-dismiss:hover, .compac-pwa-dialog-close:hover { background: #e7eee8; }
+.compac-pwa-layer button:focus-visible { outline: 3px solid #95b457; outline-offset: 3px; }
+.compac-pwa-update-open { flex-shrink: 0; border: 1px solid #cbd8d2; border-radius: 7px; padding: .5rem .7rem; background: #f5f8f5; color: #124a42; font-weight: 650 !important; }
+.compac-pwa-dialog { box-sizing: border-box; width: min(32rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; border: 1px solid #d7e0d9; border-radius: 18px; padding: 1.5rem; background: #fff; color: #183b38; box-shadow: 0 24px 100px #0b302e33; }
+.compac-pwa-dialog::backdrop { background: #062d2b8c; backdrop-filter: blur(3px); }
+.compac-pwa-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.compac-pwa-eyebrow { font-size: .68rem; font-weight: 750; letter-spacing: .12em; color: #6d7e70; }
+.compac-pwa-dialog h2 { margin: .8rem 0 1rem; font-size: 1.6rem; line-height: 1.2; letter-spacing: -.03em; }
+.compac-pwa-dialog-content { font-size: .925rem; line-height: 1.65; color: #4d615c; }
+.compac-pwa-dialog-content p { margin: 0 0 1rem; }
+.compac-pwa-dialog-content ol { padding-left: 1.35rem; margin: 0 0 1rem; }
+.compac-pwa-dialog-content li { padding-left: .25rem; margin-bottom: .55rem; }
+.compac-pwa-dialog-content strong { color: #183b38; }
+.compac-pwa-dialog-content .compac-pwa-note { border-left: 3px solid #c4d98c; padding: .75rem .9rem; border-radius: 0 6px 6px 0; background: #faf7eb; font-size: .84rem; }
+.compac-pwa-dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .6rem; margin-top: 1.25rem; }
+.compac-pwa-dialog-actions button { min-height: 42px; padding: .65rem 1rem; border-radius: 8px; font-weight: 650; }
+.compac-pwa-primary { border: 1px solid #0b4b43; background: #0b4b43; color: #fff; }
+.compac-pwa-primary:hover { background: #083c35; }
+.compac-pwa-secondary { border: 1px solid #d5ded8; background: #fff; color: #3a5b53; }
+@media (max-width: 480px) {
+  .compac-pwa-dialog { padding: 1.15rem; }
+  .compac-pwa-status, .compac-pwa-update { gap: .5rem; padding: .7rem .8rem; font-size: .8rem; }
+  .compac-pwa-update { flex-wrap: wrap; }
+  .compac-pwa-update p { flex-basis: calc(100% - 45px); }
+  .compac-pwa-update-open { order: 2; }
+}

@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#123e38" />
+    <meta
+      name="description"
+      content="COMPAC — Gestão de almoxarifado, obras e operações."
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>COMPAC · Gestão de almoxarifado</title>
+    <link rel="icon" href="/static/icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link
+      rel="apple-touch-icon"
+      href="/static/icons/apple-touch-icon-180.png"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/pwa.css" />
+    <script src="/static/app.js" defer></script>
+    <script src="/static/pwa.js" defer></script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Ir para o conteúdo</a>
+    <div id="boot-screen" class="boot-screen" aria-live="polite">
+      <div class="brand-mark large">C<span></span></div>
+      <span>Preparando seu espaço de trabalho…</span
+      ><span class="spinner"></span>
+    </div>
+    <section id="auth-screen" class="auth-screen" hidden>
+      <div class="auth-story">
+        <a class="brand auth-brand" href="#"
+          ><span class="brand-mark">C<span></span></span
+          ><span
+            >COMPAC<span class="brand-caption"
+              >GESTÃO DE ALMOXARIFADO</span
+            ></span
+          ></a
+        >
+        <div class="auth-message">
+          <span class="eyebrow light">CONTROLE QUE MOVE A OPERAÇÃO</span>
+          <h1>Tudo no lugar.<br />Seu trabalho<br /><em>mais à frente.</em></h1>
+          <p>
+            Materiais, equipamentos e equipes conectados. Da entrada no
+            almoxarifado à próxima entrega.
+          </p>
+          <div class="auth-pills">
+            <span>Estoque organizado</span><span>Operação conectada</span>
+          </div>
+        </div>
+        <div class="auth-art" aria-hidden="true">
+          <div class="art-grid"></div>
+          <div class="art-stack stack-one"></div>
+          <div class="art-stack stack-two"></div>
+          <div class="art-stack stack-three"></div>
+          <span class="art-plus plus-one">+</span
+          ><span class="art-plus plus-two">+</span>
+        </div>
+        <div class="auth-footer">
+          COMPAC <span>Uma visão completa da sua operação.</span>
+        </div>
+      </div>
+      <div class="auth-panel">
+        <div class="auth-form-wrap">
+          <div class="mobile-brand brand">
+            <span class="brand-mark">C<span></span></span><span>COMPAC</span>
+          </div>
+          <span class="eyebrow">SEU ESPAÇO DE TRABALHO</span>
+          <h2 id="auth-title">Bem-vindo de volta.</h2>
+          <p id="auth-description" class="muted">
+            Entre com suas credenciais para continuar.
+          </p>
+          <form id="auth-form" novalidate>
+            <div id="setup-fields" hidden>
+              <label for="auth-name">Seu nome</label
+              ><input
+                id="auth-name"
+                name="name"
+                autocomplete="name"
+                placeholder="Como podemos chamar você?"
+              />
+            </div>
+            <label for="auth-username">Usuário</label
+            ><input
+              id="auth-username"
+              name="username"
+              autocomplete="username"
+              placeholder="Digite seu usuário"
+              required
+            /><label for="auth-password">Senha</label>
+            <div class="password-field">
+              <input
+                id="auth-password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Digite sua senha"
+                required
+              /><button
+                id="password-toggle"
+                type="button"
+                aria-label="Mostrar senha"
+              ></button>
+            </div>
+            <div id="setup-token-field" hidden>
+              <label for="auth-token">Código de configuração</label
+              ><input
+                id="auth-token"
+                name="setup_token"
+                autocomplete="off"
+                placeholder="Código definido pelo administrador"
+              />
+            </div>
+            <div id="auth-error" class="inline-error" role="alert" hidden></div>
+            <button
+              type="submit"
+              id="auth-submit"
+              class="button primary auth-submit"
+            >
+              Entrar no COMPAC <span aria-hidden="true">↗</span>
+            </button>
+          </form>
+          <div class="auth-security">
+            <span id="auth-lock"></span
+            ><span>Acesso seguro. Seus dados, sob controle.</span>
+          </div>
+          <button type="button" class="button install-auth" data-install-app>
+            Instalar aplicativo <span aria-hidden="true">↓</span>
+          </button>
+          <p class="auth-help" id="auth-help">
+            Precisa de acesso? Fale com o administrador da sua equipe.
+          </p>
+        </div>
+        <div class="auth-panel-footer">Gestão simples. Operação eficiente.</div>
+      </div>
+    </section>
+    <div id="app-shell" class="app-shell" hidden>
+      <div id="sidebar-overlay" class="sidebar-overlay" hidden></div>
+      <aside id="sidebar" class="sidebar" aria-label="Navegação principal">
+        <a class="brand sidebar-brand" href="#dashboard"
+          ><span class="brand-mark">C<span></span></span
+          ><span
+            >COMPAC<span class="brand-caption"
+              >GESTÃO DE ALMOXARIFADO</span
+            ></span
+          ></a
+        ><button
+          id="sidebar-close"
+          class="icon-button sidebar-close"
+          type="button"
+          aria-label="Fechar menu"
+        ></button>
+        <div class="workspace-label">
+          <span class="workspace-icon"></span
+          ><span
+            >Espaço de trabalho<small>Visão integrada da operação</small></span
+          ><span class="workspace-dot"></span>
+        </div>
+        <nav id="main-nav"></nav>
+        <div class="sidebar-bottom">
+          <button type="button" class="nav-link install-nav" data-install-app>
+            <span class="nav-icon" id="install-icon"></span
+            ><span>Instalar aplicativo</span><span class="small-arrow">↗</span>
+          </button>
+          <div class="sidebar-user">
+            <span id="user-avatar" class="avatar"></span
+            ><span class="user-info"
+              ><strong id="user-name"></strong
+              ><small id="user-role"></small></span
+            ><button
+              id="logout-button"
+              type="button"
+              class="icon-button"
+              aria-label="Sair do COMPAC"
+              title="Sair"
+            ></button>
+          </div>
+        </div>
+      </aside>
+      <div class="app-workspace">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button
+              id="menu-toggle"
+              type="button"
+              class="icon-button menu-toggle"
+              aria-label="Abrir menu"
+            ></button>
+            <div class="breadcrumb">
+              <span>Meu espaço</span><span class="breadcrumb-divider">/</span
+              ><strong id="breadcrumb-current">Visão geral</strong>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <div class="global-search">
+              <span id="search-icon"></span
+              ><input
+                id="global-search"
+                type="search"
+                placeholder="Buscar nesta página…"
+                aria-label="Buscar nesta página"
+              /><kbd>/</kbd>
+            </div>
+            <button
+              id="refresh-button"
+              type="button"
+              class="icon-button"
+              aria-label="Atualizar dados"
+              title="Atualizar dados"
+            ></button
+            ><a
+              href="#alertas"
+              id="alerts-link"
+              class="icon-button notification-button"
+              aria-label="Ver alertas"
+              ><span id="notification-icon"></span
+              ><span
+                id="notification-dot"
+                class="notification-dot"
+                hidden
+              ></span
+            ></a>
+            <div class="topbar-divider"></div>
+            <span id="topbar-avatar" class="avatar small"></span>
+          </div>
+        </header>
+        <main id="main-content" tabindex="-1">
+          <div id="page-content"></div>
+        </main>
+        <footer class="app-footer">
+          <span
+            >COMPAC <span class="footer-separator">/</span> Gestão de
+            almoxarifado</span
+          ><span class="connection-status"
+            ><i></i>
+            <span id="connection-text">Conectado à operação</span></span
+          >
+        </footer>
+      </div>
+      <nav
+        id="mobile-nav"
+        class="mobile-nav"
+        aria-label="Navegação rápida"
+      ></nav>
+    </div>
+    <div
+      id="toast-region"
+      class="toast-region"
+      aria-live="polite"
+      aria-atomic="false"
+    ></div>
+    <dialog id="form-dialog" class="app-dialog">
+      <div id="dialog-content"></div>
+    </dialog>
+  </body>
+</html>
