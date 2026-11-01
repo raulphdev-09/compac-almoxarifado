@@ -1,23 +1,21 @@
-# Review Render's current pricing before creating this paid service and disk.
+# Free web service. Durable data lives in an external free PostgreSQL project.
 services:
   - type: web
     name: compac-almoxarifado
     runtime: python
-    plan: starter
+    plan: free
     numInstances: 1
     autoDeployTrigger: "off"
     buildCommand: pip install -r requirements.lock
     startCommand: python -m app.serve
     healthCheckPath: /health
-    disk:
-      name: compac-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.12
-      - key: COMPAC_DB
-        value: /var/data/compac.db
+      - key: DATABASE_URL
+        sync: false
+      - key: COMPAC_REQUIRE_POSTGRES
+        value: "1"
       - key: COMPAC_COOKIE_SECURE
         value: "1"
       - key: COMPAC_TIMEZONE

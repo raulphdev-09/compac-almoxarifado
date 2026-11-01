@@ -4,7 +4,9 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),asse
 const root=path.resolve(__dirname,'..'),temp=fs.mkdtempSync(path.join(os.tmpdir(),'compac-ui-'));
 const port=process.env.COMPAC_TEST_PORT||'8812',base='http://127.0.0.1:'+port;
 const output=process.env.COMPAC_TEST_ARTIFACTS||temp;fs.mkdirSync(output,{recursive:true});
-const child=spawn(path.join(root,'.venv/bin/python'),['-m','uvicorn','app.main:app','--host','127.0.0.1','--port',port],{cwd:root,env:{...process.env,COMPAC_DB:path.join(temp,'test.db'),RENDER:'',COMPAC_SETUP_TOKEN:'',COMPAC_COOKIE_SECURE:'0',COMPAC_PUBLIC_URL:'',RENDER_EXTERNAL_URL:''},stdio:'ignore'});
+// Ignore a production DATABASE_URL inherited by the developer's terminal.
+// Only an explicitly supplied disposable test URL enables PostgreSQL here.
+const child=spawn(path.join(root,'.venv/bin/python'),['-m','uvicorn','app.main:app','--host','127.0.0.1','--port',port],{cwd:root,env:{...process.env,COMPAC_DB:path.join(temp,'test.db'),RENDER:'',COMPAC_SETUP_TOKEN:'',COMPAC_COOKIE_SECURE:'0',COMPAC_PUBLIC_URL:'',RENDER_EXTERNAL_URL:'',DATABASE_URL:process.env.COMPAC_BROWSER_DATABASE_URL||'',COMPAC_REQUIRE_POSTGRES:process.env.COMPAC_BROWSER_DATABASE_URL?'1':''},stdio:'ignore'});
 let browser,page;
 (async()=>{try{
  for(let i=0;i<100;i++){try{if((await fetch(base+'/health')).ok)break;}catch{}if(i===99)throw Error('Servidor indisponível');await new Promise(r=>setTimeout(r,50));}

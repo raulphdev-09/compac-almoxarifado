@@ -15,6 +15,7 @@ from pathlib import Path
 from threading import Lock
 from zoneinfo import ZoneInfo
 
+import psycopg
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -164,6 +165,7 @@ async def security(request: Request, call_next):
     return response
 
 
+@app.exception_handler(psycopg.IntegrityError)
 @app.exception_handler(sqlite3.IntegrityError)
 async def integrity_error(request, exc):
     return JSONResponse({'detail': 'Código duplicado ou vínculo inválido. Confira os dados.'}, status_code=409)
@@ -224,7 +226,7 @@ def setup(data: dict):
         username = text(data.get('username'), 'Usuário', maximum=80)
         name = text(data.get('name'), 'Nome', maximum=120)
         hashed = hash_password(password(data.get('password')))
-        key = db.execute('INSERT INTO users(username,name,password_hash,role,created_at) VALUES(?,?,?,?,?)', (username, name, hashed, 'ADMIN', now())).lastrowid
+        key = db.execute('INSERT INTO users(username,name,password_hash,role,created_at) VALUES(?,?,?,?,?) RETURNING id', (username, name, hashed, 'ADMIN', now())).fetchone()['id']
         audit(db, key, 'CONFIGURACAO_INICIAL', 'users', key)
         return session_response(db, reference(db, 'users', key))
 
@@ -243,7 +245,7 @@ def login(data: dict, request: Request):
             fail('Muitas tentativas. Aguarde cinco minutos.', 429)
         attempts.append(time.monotonic())
     with connect(write=True) as db:
-        row = db.execute('SELECT * FROM users WHERE username=? AND active=1', (username,)).fetchone()
+        row = db.execute('SELECT * FROM users WHERE LOWER(username)=LOWER(?) AND active=1', (username,)).fetchone()
         encoded = row['password_hash'] if row else '00'*16 + ':' + '00'*64
         if not verify_password(value, encoded) or row is None:
             fail('Usuário ou senha inválidos.', 401)
@@ -282,7 +284,7 @@ def add_user(data: dict, user=Depends(administrator)):
         fail('Perfil inválido.')
     hashed = hash_password(password(data.get('password')))
     with connect(write=True) as db:
-        key = db.execute('INSERT INTO users(username,name,password_hash,role,created_at) VALUES(?,?,?,?,?)', (username, name, hashed, role, now())).lastrowid
+        key = db.execute('INSERT INTO users(username,name,password_hash,role,created_at) VALUES(?,?,?,?,?) RETURNING id', (username, name, hashed, role, now())).fetchone()['id']
         audit(db, user['id'], 'CRIAR', 'users', key, {'username': username, 'role': role})
         return public_user(reference(db, 'users', key))
 
@@ -296,7 +298,7 @@ def edit_user(key: int, data: dict, user=Depends(administrator)):
             fail('Perfil ou situação inválidos.')
         if key == user['id'] and (role != 'ADMIN' or not active):
             fail('Você não pode remover seu próprio acesso de administrador.')
-        db.execute('UPDATE users SET role=?,active=? WHERE id=?', (role, active, key))
+        db.execute('UPDATE users SET role=?,active=? WHERE id=?', (role, int(active), key))
         if 'password' in data:
             db.execute('UPDATE users SET password_hash=? WHERE id=?', (hash_password(password(data['password'])), key))
         if 'password' in data or not active or role != row['role']:
@@ -359,7 +361,7 @@ def create_entity(entity: str, data: dict, user=Depends(operator)):
         fail('Cadastro não encontrado.', 404)
     with connect(write=True) as db:
         values = validate_entity(db, entity, data)
-        key = db.execute(f"INSERT INTO {entity}({','.join(values)}) VALUES({','.join('?' for _ in values)})", tuple(values.values())).lastrowid
+        key = db.execute(f"INSERT INTO {entity}({','.join(values)}) VALUES({','.join('?' for _ in values)}) RETURNING id", tuple(values.values())).fetchone()['id']
         audit(db, user['id'], 'CRIAR', entity, key, values)
         return dict(reference(db, entity, key))
 
@@ -385,7 +387,7 @@ def scaled(row):
 
 
 def balance_delta(db, material, location, delta):
-    db.execute('INSERT OR IGNORE INTO balances VALUES(?,?,0)', (material, location))
+    db.execute('INSERT INTO balances(material_id,location_id,quantity) VALUES(?,?,0) ON CONFLICT(material_id,location_id) DO NOTHING', (material, location))
     old = db.execute('SELECT quantity FROM balances WHERE material_id=? AND location_id=?', (material, location)).fetchone()['quantity']
     if old + delta < 0:
         fail('Saldo insuficiente na localização de origem.', 409)
@@ -438,8 +440,8 @@ def perform_movement(db, data, user, requisition=None):
             delta -= old['quantity'] if old else 0
         balance_delta(db, material, destination, delta)
     recorded = delta if kind == 'AJUSTE' else amount
-    key = db.execute('INSERT INTO movements(type,material_id,quantity,origin_id,destination_id,employee_id,notes,user_id,created_at,requisition_id) VALUES(?,?,?,?,?,?,?,?,?,?)',
-                     (kind, material, recorded, origin, destination, employee, notes, user['id'], now(), requisition)).lastrowid
+    key = db.execute('INSERT INTO movements(type,material_id,quantity,origin_id,destination_id,employee_id,notes,user_id,created_at,requisition_id) VALUES(?,?,?,?,?,?,?,?,?,?) RETURNING id',
+                     (kind, material, recorded, origin, destination, employee, notes, user['id'], now(), requisition)).fetchone()['id']
     if kind == 'SAIDA' and employee:
         db.execute('INSERT INTO loans(employee_id,material_id,location_id,quantity,due_date,movement_id,created_at) VALUES(?,?,?,?,?,?,?)', (employee, material, origin, amount, due_date, key, now()))
     audit(db, user['id'], kind, 'movements', key, {'material_id': material, 'quantity': recorded / 1000, 'origin_id': origin, 'destination_id': destination, 'notes': notes})
@@ -499,7 +501,7 @@ def add_requisition(data: dict, user=Depends(operator)):
             if material in [i[0] for i in validated]:
                 fail('Agrupe o mesmo material em um único item.')
             validated.append((material, quantity(item.get('quantity'))))
-        key = db.execute('INSERT INTO requisitions(work_id,requester_id,priority,notes,created_at) VALUES(?,?,?,?,?)', (work, user['id'], priority, text(data.get('notes', ''), 'Observações', False) or '', now())).lastrowid
+        key = db.execute('INSERT INTO requisitions(work_id,requester_id,priority,notes,created_at) VALUES(?,?,?,?,?) RETURNING id', (work, user['id'], priority, text(data.get('notes', ''), 'Observações', False) or '', now())).fetchone()['id']
         db.executemany('INSERT INTO requisition_items(requisition_id,material_id,quantity) VALUES(?,?,?)', [(key, *item) for item in validated])
         audit(db, user['id'], 'CRIAR', 'requisitions', key)
         return {'id': key}
@@ -559,7 +561,7 @@ def add_ticket(data: dict, user=Depends(operator)):
     with connect(write=True) as db:
         work = reference(db, 'works', data.get('work_id'), True)
         assignee = assignee_reference(db, data.get('assignee_id'))
-        key = db.execute('INSERT INTO tickets(title,description,priority,work_id,assignee_id,creator_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)', (title, description, data['priority'], work['id'] if work else None, assignee, user['id'], now(), now())).lastrowid
+        key = db.execute('INSERT INTO tickets(title,description,priority,work_id,assignee_id,creator_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?) RETURNING id', (title, description, data['priority'], work['id'] if work else None, assignee, user['id'], now(), now())).fetchone()['id']
         audit(db, user['id'], 'ABRIR', 'tickets', key)
         return {'id': key}
 
@@ -578,7 +580,7 @@ def add_comment(key: int, data: dict, user=Depends(operator)):
     body = text(data.get('body'), 'Comentário', maximum=5000)
     with connect(write=True) as db:
         reference(db, 'tickets', key)
-        cid = db.execute('INSERT INTO ticket_comments(ticket_id,user_id,body,created_at) VALUES(?,?,?,?)', (key, user['id'], body, now())).lastrowid
+        cid = db.execute('INSERT INTO ticket_comments(ticket_id,user_id,body,created_at) VALUES(?,?,?,?) RETURNING id', (key, user['id'], body, now())).fetchone()['id']
         db.execute('UPDATE tickets SET updated_at=? WHERE id=?', (now(), key))
         audit(db, user['id'], 'COMENTAR', 'tickets', key)
         return {'id': cid}
@@ -614,7 +616,7 @@ def open_maintenance(data: dict, user=Depends(operator)):
         if equipment['status'] in ('BAIXADO', 'MANUTENCAO'):
             fail('O patrimônio não está disponível para abrir manutenção.', 409)
         defect = text(data.get('defect'), 'Defeito')
-        key = db.execute('INSERT INTO maintenance(equipment_id,defect,created_at,user_id) VALUES(?,?,?,?)', (equipment['id'], defect, now(), user['id'])).lastrowid
+        key = db.execute('INSERT INTO maintenance(equipment_id,defect,created_at,user_id) VALUES(?,?,?,?) RETURNING id', (equipment['id'], defect, now(), user['id'])).fetchone()['id']
         db.execute("UPDATE equipment SET status='MANUTENCAO' WHERE id=?", (equipment['id'],))
         audit(db, user['id'], 'ABRIR', 'maintenance', key)
         return {'id': key}
@@ -638,7 +640,7 @@ def close_maintenance(key: int, data: dict, user=Depends(operator)):
 
 def alert_rows(db):
     result = []
-    for r in db.execute("SELECT m.id,m.description,m.minimum_stock,COALESCE(SUM(b.quantity),0)/1000.0 quantity FROM materials m LEFT JOIN balances b ON b.material_id=m.id WHERE m.status='ATIVO' GROUP BY m.id HAVING quantity<m.minimum_stock"):
+    for r in db.execute("SELECT m.id,m.description,m.minimum_stock,COALESCE(SUM(b.quantity),0)/1000.0 quantity FROM materials m LEFT JOIN balances b ON b.material_id=m.id WHERE m.status='ATIVO' GROUP BY m.id HAVING COALESCE(SUM(b.quantity),0)/1000.0<m.minimum_stock"):
         result.append({'type': 'ESTOQUE', 'priority': 'ALTA', 'message': f"{r['description']}: saldo {r['quantity']:g}, mínimo {r['minimum_stock']:g}.", 'module': 'stock'})
     today = datetime.now(ZoneInfo(os.getenv('COMPAC_TIMEZONE', 'America/Sao_Paulo'))).date().isoformat()
     for r in db.execute('SELECT e.name,m.description,l.due_date FROM loans l JOIN employees e ON e.id=l.employee_id JOIN materials m ON m.id=l.material_id WHERE l.quantity>0 AND l.due_date<?', (today,)):
@@ -665,7 +667,7 @@ def dashboard(user=Depends(current_user)):
                 'expenses': count('SELECT ROUND(COALESCE(SUM(total_cost),0),2) FROM expenses'),
                 'alerts': alert_rows(db),
                 'recent': [dict(r) for r in db.execute('SELECT m.id,m.type,m.quantity/1000.0 quantity,mat.description material,mat.unit,m.created_at,u.name author FROM movements m JOIN materials mat ON mat.id=m.material_id JOIN users u ON u.id=m.user_id ORDER BY m.id DESC LIMIT 6')],
-                'expense_by_work': [dict(r) for r in db.execute("SELECT COALESCE(w.name,'Sem obra') name,ROUND(SUM(e.total_cost),2) total FROM expenses e LEFT JOIN works w ON w.id=e.work_id GROUP BY e.work_id ORDER BY total DESC")]}
+                'expense_by_work': [dict(r) for r in db.execute("SELECT COALESCE(w.name,'Sem obra') name,ROUND(SUM(e.total_cost),2) total FROM expenses e LEFT JOIN works w ON w.id=e.work_id GROUP BY e.work_id,w.name ORDER BY total DESC")]}
 
 
 @app.get('/api/forecast')
@@ -673,7 +675,7 @@ def forecast(work_id: int, activity: str, quantity_produced: float, user=Depends
     produced = number(quantity_produced, minimum=0.001)
     with connect() as db:
         reference(db, 'works', work_id)
-        rows = [dict(r) for r in db.execute('SELECT p.material_id,SUM(p.consumption_per_unit) consumption_per_unit,m.description material,m.unit,COALESCE((SELECT SUM(b.quantity)/1000.0 FROM balances b JOIN locations l ON l.id=b.location_id WHERE b.material_id=p.material_id AND l.work_id=p.work_id),0) available FROM consumption_profiles p JOIN materials m ON m.id=p.material_id WHERE p.work_id=? AND p.activity=? COLLATE NOCASE GROUP BY p.material_id,p.work_id', (work_id, activity))]
+        rows = [dict(r) for r in db.execute('SELECT p.material_id,SUM(p.consumption_per_unit) consumption_per_unit,m.description material,m.unit,COALESCE((SELECT SUM(b.quantity)/1000.0 FROM balances b JOIN locations l ON l.id=b.location_id WHERE b.material_id=p.material_id AND l.work_id=p.work_id),0) available FROM consumption_profiles p JOIN materials m ON m.id=p.material_id WHERE p.work_id=? AND LOWER(p.activity)=LOWER(?) GROUP BY p.material_id,p.work_id,m.description,m.unit', (work_id, activity))]
         for r in rows:
             r['expected'] = float((Decimal(str(r['consumption_per_unit'])) * produced).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP))
             r['shortage'] = max(0, round(r['expected'] - r['available'], 3))

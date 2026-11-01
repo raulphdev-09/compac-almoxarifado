@@ -48,6 +48,7 @@ async function main() {
         ...process.env, PORT: port, COMPAC_DB: path.join(temp, 'smoke.db'),
         COMPAC_COOKIE_SECURE: '0', COMPAC_SETUP_TOKEN: 'local-pwa-smoke-only',
         COMPAC_PUBLIC_URL: base, RENDER: 'false', PWA_SMOKE_STATIC: staticCopy,
+        DATABASE_URL: '', COMPAC_REQUIRE_POSTGRES: '',
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });

@@ -1,23 +1,46 @@
 # COMPAC · Almoxarifado
 
-Aplicativo web em português para materiais, estoque por local, empréstimos e devoluções, requisições, chamados, patrimônio, manutenção, gastos, produtividade, previsão de consumo, alertas, exportação CSV e auditoria. Usa FastAPI e SQLite, com quantidades em milésimos, perfis de acesso e sessões de 8 horas. O banco começa vazio: nenhum dado real ou conta padrão acompanha o projeto.
+Aplicativo web em português para materiais, estoque por local, empréstimos e devoluções, requisições, chamados, patrimônio, manutenção, gastos, produtividade, previsão de consumo, alertas, exportação CSV e auditoria. Usa FastAPI, PostgreSQL na hospedagem gratuita e SQLite opcional no computador, com quantidades em milésimos, perfis de acesso e sessões de 8 horas. O banco começa vazio: nenhum dado real ou conta padrão acompanha o projeto.
 
-## Publicar no Render
+## Publicar gratuitamente: Render Free + Neon Free
+
+Esta configuração usa **Render Free para o site** e **Neon Free para guardar os dados em PostgreSQL**. O `render.yaml` não cria serviço pago, disco persistente nem banco pago na Render. Mantenha as duas contas no plano **Free** e respeite os limites desses serviços.
+
+### 1. Criar o banco gratuito
+
+1. Entre em [neon.com](https://neon.com) e crie uma conta no plano **Free** (a página oficial informa que não exige cartão).
+2. Crie um projeto, por exemplo `compac-almoxarifado`, e escolha uma região próxima da região do seu site na Render.
+3. Abra **Connect** e copie a conexão PostgreSQL mostrada como **Connection string**. A conexão com pooling pode ser usada. Essa URL contém a senha do banco: guarde-a e cole-a somente nas configurações seguras da hospedagem. **Não envie a URL em chat nem faça commit dela.**
+
+### 2. Publicar o site gratuito
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/raulphdev-09/compac-almoxarifado)
 
-O botão abre o Blueprint do repositório; ele não publica nem contrata recursos sozinho. Revise a configuração e confirme os custos no Render antes de criar os recursos. O `render.yaml` propõe **um serviço Starter pago e um disco persistente de 1 GB**. Consulte os preços atuais no painel: o disco é necessário para preservar o SQLite entre reinícios e publicações. Não troque por armazenamento temporário se precisar manter os dados.
+1. Abra o botão acima na sua conta da Render e conecte o repositório do GitHub.
+2. Confira que o serviço está como **Free**, sem disco pago ou outros recursos pagos. O Blueprint não contrata recursos sozinho.
+3. Quando a Render pedir **DATABASE_URL**, cole a conexão copiada do Neon. Essa é uma variável secreta do serviço, não um arquivo do projeto.
+4. Confirme a criação e aguarde a publicação ficar saudável. A verificação de saúde é `/health`.
+5. No painel do serviço, abra **Environment** e copie o valor gerado de **COMPAC_SETUP_TOKEN**. Esse é o código de ativação para criar seu primeiro administrador.
+6. Abra o endereço **HTTPS** fornecido pela Render, informe o código de ativação e crie seu administrador. O cadastro inicial fica indisponível depois dessa etapa.
+7. Cadastre categorias, obras, locais, funcionários e materiais; registre as entradas de estoque. Cada pessoa deve usar sua própria conta e perfil.
 
-1. Envie o projeto para `raulphdev-09/compac-almoxarifado` no GitHub e abra o botão acima.
-2. Conecte o repositório no Render, revise serviço, região, plano e disco e confirme a criação somente após aceitar os custos.
-3. Aguarde a implantação ficar saudável. O serviço usa Python 3.12, `requirements.lock`, um processo e a verificação `/health`.
-4. No painel do serviço, abra **Environment** e copie o valor gerado de `COMPAC_SETUP_TOKEN`. Ele é o **código de ativação** exigido para criar o primeiro administrador. Não coloque esse código no repositório, em capturas de tela ou em mensagens públicas.
-5. Abra o endereço HTTPS fornecido pelo Render. Na configuração inicial, informe o código de ativação e crie seu próprio administrador com senha segura. O cadastro inicial fica indisponível após a criação do primeiro administrador.
-6. Cadastre categorias, obras, locais, funcionários e materiais da sua operação e registre o estoque inicial. Cada pessoa deve usar sua própria conta e o perfil adequado.
+Se você já tem dados em um serviço SQLite anterior, preserve e exporte esses dados **antes** de trocar o banco ou remover um disco. Eles não são importados automaticamente para o Neon. Para adaptar um serviço existente, confira a opção **Free**, defina `DATABASE_URL` e `COMPAC_REQUIRE_POSTGRES=1` e só remova o disco antigo após preservar os dados. Alterar o código no GitHub não converte automaticamente um serviço existente.
 
-O Blueprint configura `COMPAC_DB=/var/data/compac.db`, `COMPAC_COOKIE_SECURE=1` e `COMPAC_TIMEZONE=America/Sao_Paulo`. O Render informa `PORT` e `RENDER_EXTERNAL_URL`; o aplicativo usa o endereço externo para verificar a origem das ações. Para domínio próprio, configure `COMPAC_PUBLIC_URL` com a URL HTTPS pública exata (por exemplo, `https://almoxarifado.suaempresa.com.br`). Não use curingas. Em produção no Render, a ausência do código de ativação impede a inicialização.
+### Limites e dados
 
-Publicações automáticas estão desativadas no Blueprint. Depois de revisar uma atualização, use **Manual Deploy** no painel. O disco não substitui uma cópia de segurança: mantenha backups regulares e teste a restauração antes de depender deles. Para copiar um banco em uso, use o backup do SQLite, que gera uma cópia consistente; não copie apenas o arquivo principal enquanto há gravações. O serviço deve continuar com uma única instância e um worker.
+- **Render Free:** o site pode dormir após 15 minutos sem tráfego; a primeira abertura depois disso pode levar cerca de um minuto. Há limites mensais de horas, tráfego e compilações. Isso também afeta a abertura pelo ícone instalado no celular.
+- **Neon Free:** armazenamento, transferência e processamento têm cotas. O plano gratuito não é um período de teste, mas é adequado a uso pequeno e deve ter seu consumo acompanhado no painel. As cotas atuais estão na [página oficial de preços](https://neon.com/pricing).
+- O filesystem da Render Free é temporário. Todos os dados de operação ficam no Neon; o aplicativo recusa iniciar com `COMPAC_REQUIRE_POSTGRES=1` se `DATABASE_URL` estiver ausente, para evitar guardar dados temporariamente por engano.
+- Não use o banco PostgreSQL gratuito da própria Render como substituto permanente: a [documentação oficial](https://render.com/docs/free) informa que ele expira após 30 dias. Esta configuração usa o Neon externo.
+- Mantenha cópias de segurança dos dados e acompanhe os avisos de limites dos provedores. A disponibilidade desses planos está sujeita às regras dos serviços.
+
+### Configurações da aplicação
+
+O Blueprint configura `COMPAC_REQUIRE_POSTGRES=1`, `COMPAC_COOKIE_SECURE=1` e `COMPAC_TIMEZONE=America/Sao_Paulo`. O Render informa `PORT` e `RENDER_EXTERNAL_URL`; o aplicativo usa esse endereço externo para verificar a origem das ações. Para domínio próprio, configure `COMPAC_PUBLIC_URL` com a URL HTTPS pública exata. Não use curingas. A ausência do código de ativação impede a inicialização no Render.
+
+As conexões PostgreSQL externas validam o certificado TLS e o nome do servidor. O aplicativo não guarda a senha no código. Uma transação serializa as escritas para manter criação inicial, estoque e atendimento integral de requisições consistentes. PostgreSQL é acessado por conexões curtas, compatíveis com o pooler do Neon.
+
+Publicações automáticas estão desativadas no Blueprint. Depois de revisar uma atualização, use **Manual Deploy** no painel. Nenhuma conta Neon ou serviço Render foi criado por estes arquivos; os dados da conexão devem ser configurados na sua conta para concluir a publicação.
 
 ## Executar no computador
 
@@ -32,7 +55,7 @@ pip install -r requirements.lock
 python -m app.serve
 ```
 
-Abra `http://localhost:8000`. O banco local é criado conforme a configuração do aplicativo. Para exigir um código também no ambiente local, configure `COMPAC_SETUP_TOKEN` antes de iniciar. `PORT` permite escolher outra porta. Nunca compartilhe o arquivo do banco ou publique senhas no Git.
+Abra `http://localhost:8000`. Sem `DATABASE_URL`, o banco local é criado em `.data/compac.db` (ou no caminho `COMPAC_DB`). Se `DATABASE_URL` estiver definida, a aplicação usa PostgreSQL; use somente um banco de desenvolvimento para testes. Para exigir um código também no ambiente local, configure `COMPAC_SETUP_TOKEN` antes de iniciar. `PORT` permite escolher outra porta. Nunca compartilhe o arquivo do banco ou publique senhas no Git.
 
 Para executar as verificações do projeto:
 
@@ -40,7 +63,15 @@ Para executar as verificações do projeto:
 .venv/bin/python -m pytest -q
 ```
 
-Com Node.js e o pacote Playwright disponíveis, `node tests/pwa_smoke.cjs` verifica a PWA em Chromium usando um banco descartável. `PWA_BROWSER_PATH` permite indicar um Chromium instalado no computador. Essa verificação não instala o aplicativo em um celular.
+A suíte usa SQLite temporário por padrão. Para repetir os mesmos testes em um PostgreSQL **descartável**, forneça uma conexão de teste:
+
+```sh
+COMPAC_TEST_DATABASE_URL='postgresql://usuario:senha@servidor/banco_de_teste?sslmode=require' .venv/bin/python -m pytest -q
+```
+
+Nunca use uma conexão de produção nesses comandos. Cada caso PostgreSQL cria e remove apenas um schema com nome aleatório, sem tocar os demais schemas. A suíte valida os dois bancos quando essa variável está presente, incluindo concorrência, rollback integral, valores grandes, unicidade e persistência depois de reiniciar a aplicação. Uma URL PostgreSQL inválida ou indisponível não é substituída por SQLite.
+
+Com Node.js e o pacote Playwright disponíveis, `node tests/pwa_smoke.cjs` verifica a PWA em Chromium usando um banco descartável. `PWA_BROWSER_PATH` permite indicar um Chromium instalado no computador. Essa verificação não instala o aplicativo em um celular. `node tests/browser_smoke.cjs` testa os formulários e a navegação com SQLite temporário. Esses scripts ignoram uma `DATABASE_URL` de produção herdada; para o teste funcional com PostgreSQL, use somente `COMPAC_BROWSER_DATABASE_URL` apontando para um banco vazio e descartável.
 
 ## Instalar no celular
 
