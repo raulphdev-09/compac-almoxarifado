@@ -84,3 +84,14 @@ Use o endereço **HTTPS** da sua implantação e o botão **Instalar aplicativo*
 A instalação oferece um ícone e uma janela própria. **Os dados continuam exigindo conexão com a internet.** Sem rede, o aplicativo mostra uma mensagem amigável e uma página para tentar novamente. Não há cache de APIs ou dados de usuários, nem fila de gravações offline. Só a página pública de indisponibilidade, seus arquivos e os ícones são guardados pelo service worker. Formulários não são recarregados automaticamente quando chega uma atualização: o usuário escolhe quando atualizar.
 
 O manifesto é `/manifest.webmanifest`; o service worker é `/sw.js`, com escopo `/`. Os ícones incluem PNG de 192 e 512 px, uma versão maskable de 512 px com área segura e um ícone Apple de 180 px. Validações automatizadas em Chromium não substituem testes em aparelho real; a instalação em Safari/iPhone precisa ser conferida nesse dispositivo.
+
+
+## Ferramentas Neon neste projeto
+
+A configuração do Codex em `.codex/config.toml` aponta para o MCP oficial do Neon com OAuth; ela não contém chave de API. A skill `neon-postgres` foi instalada em `.agents/skills/` e sua origem está registrada em `skills-lock.json`.
+
+Destino solicitado para o banco: organização **rauldev** (`org-rough-rain-26686846`), região **São Paulo** e projeto **compac-almoxarifado**. A organização ainda precisa ser acessada com autenticação antes de confirmar ou criar o projeto. Instalar as ferramentas não cria um banco, não publica o site e não preenche `DATABASE_URL` por si só.
+
+A CLI oficial foi instalada fora do repositório, em `/workspace/.tools/neon/node_modules/.bin/neon`. O perfil desta sessão fica fora do Git, em `/workspace/.neon-auth`. Em um agente remoto, use uma chave com acesso à organização por meio da configuração segura `NEON_API_KEY`; nunca cole a chave em mensagens nem a grave nos arquivos versionados. O login OAuth comum da CLI retorna para o localhost da própria máquina e não conecta diretamente um navegador de outra máquina a este ambiente.
+
+Depois de autorizar a CLI, consulte os projetos da organização antes de criar outro, vincule o projeto solicitado e grave as variáveis apenas em `.env` ou `.env.local`, que são ignorados pelo Git. O aplicativo usa variáveis do processo; na Render, configure a conexão no campo `DATABASE_URL` do serviço. Reinicie o agente para carregar o MCP recém-configurado e conclua sua autenticação OAuth se usar esse caminho.
