@@ -468,17 +468,21 @@
     onSubmit = null,
     wide = false,
   ) {
+    closeSidebar();
     const d = $("#form-dialog");
     if (d.open) d.close();
     d.classList.toggle("wide", wide);
     $("#dialog-content").innerHTML =
-      `<div class="dialog-header"><div><span class="eyebrow">COMPAC · SUA OPERAÇÃO</span><h2>${E(title)}</h2>${subtitle ? `<p>${E(subtitle)}</p>` : ""}</div><button type="button" class="icon-button" data-dialog-close aria-label="Fechar janela">${icon("close")}</button></div><form id="modal-form"><div class="dialog-body"><div id="modal-error" class="form-error" role="alert" hidden></div>${body}</div><div class="dialog-footer"><button type="button" class="button" data-dialog-close>${onSubmit ? "Cancelar" : "Fechar"}</button>${onSubmit ? `<button type="submit" class="button primary" id="modal-submit">${E(submitLabel)}</button>` : ""}</div></form>`;
+      `<div class="dialog-header"><div><span class="eyebrow">COMPAC · SUA OPERAÇÃO</span><h2 id="dialog-title">${E(title)}</h2>${subtitle ? `<p>${E(subtitle)}</p>` : ""}</div><button type="button" class="icon-button" data-dialog-close aria-label="Fechar janela">${icon("close")}</button></div><form id="modal-form"><div class="dialog-body"><div id="modal-error" class="form-error" role="alert" hidden></div>${body}</div><div class="dialog-footer"><button type="button" class="button" data-dialog-close>${onSubmit ? "Cancelar" : "Fechar"}</button>${onSubmit ? `<button type="submit" class="button primary" id="modal-submit">${E(submitLabel)}</button>` : ""}</div></form>`;
     d.showModal();
+    const intent = { key: crypto.randomUUID(), payload: null, pending: false };
     $("#modal-form").onsubmit = (e) => e.preventDefault();
     if (onSubmit)
       $("#modal-form").onsubmit = async (e) => {
         e.preventDefault();
+        if (intent.pending) return;
         if (!e.currentTarget.reportValidity()) return;
+        intent.pending = true;
         const submittedForm = e.currentTarget;
         const modalBody = $(".dialog-body", submittedForm);
         const b = $("#modal-submit");
@@ -487,7 +491,7 @@
         modalBody.inert = true;
         modalBody.setAttribute("aria-busy", "true");
         try {
-          await onSubmit(submittedForm);
+          await onSubmit(submittedForm, intent);
           if (d.open && $("#modal-form") === submittedForm) d.close();
         } catch (err) {
           const box = $("#modal-error", submittedForm);
@@ -497,6 +501,7 @@
             box.scrollIntoView({ block: "nearest" });
           }
         } finally {
+          intent.pending = false;
           modalBody.inert = false;
           modalBody.removeAttribute("aria-busy");
           if (b.isConnected) b.disabled = false;
@@ -520,14 +525,47 @@
     return `<div class="field"><label for="field-${E(name)}">${E(label)}${required ? ' <span class="required-mark">*</span>' : ""}</label><select id="field-${E(name)}" name="${E(name)}" ${required ? "required" : ""} ${extra}>${opts}</select></div>`;
   }
   function closeSidebar() {
-    $("#sidebar").classList.remove("open");
+    const sidebar = $("#sidebar");
+    const wasOpen = sidebar.classList.contains("open");
+    sidebar.classList.remove("open");
+    sidebar.inert = sidebarMedia.matches;
+    sidebar.removeAttribute("role");
+    sidebar.removeAttribute("aria-modal");
+    sidebar.removeAttribute("aria-label");
+    $(".app-workspace").inert = false;
+    $("#mobile-nav").inert = false;
     $("#sidebar-overlay").hidden = true;
-    $("#menu-toggle").setAttribute("aria-expanded", "false");
+    $$("#menu-toggle,[data-action=menu]").forEach(button => button.setAttribute("aria-expanded", "false"));
+    if (wasOpen && sidebarReturnFocus?.isConnected) sidebarReturnFocus.focus();
   }
   function openSidebar() {
-    $("#sidebar").classList.add("open");
+    if (!sidebarMedia.matches) return;
+    sidebarReturnFocus = document.activeElement;
+    const sidebar = $("#sidebar");
+    sidebar.inert = false;
+    sidebar.classList.add("open");
+    sidebar.setAttribute("role", "dialog");
+    sidebar.setAttribute("aria-modal", "true");
+    sidebar.setAttribute("aria-label", "Navegação do COMPAC");
+    $(".app-workspace").inert = true;
+    $("#mobile-nav").inert = true;
     $("#sidebar-overlay").hidden = false;
-    $("#menu-toggle").setAttribute("aria-expanded", "true");
+    $$("#menu-toggle,[data-action=menu]").forEach(button => button.setAttribute("aria-expanded", "true"));
+    $("#sidebar-close").focus();
+  }
+  const sidebarMedia = window.matchMedia("(max-width: 760px)");
+  let sidebarReturnFocus = null;
+  sidebarMedia.addEventListener("change", closeSidebar);
+  closeSidebar();
+
+  function refreshPage() {
+    S.cache = {};
+    return route();
+  }
+
+  function localInputDate() {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   }
   const navigation = [
     {
@@ -1310,7 +1348,7 @@
       .map(([key, f]) => {
         let value = row ? row[key] : "";
         if (!row && f.kind === "date")
-          value = new Date().toISOString().slice(0, 10);
+          value = localInputDate();
         if (!row && f.kind === "number" && f.minimum === 0) value = 0;
         if (f.kind === "relation")
           return selectField(
@@ -1390,7 +1428,7 @@
       "Registre o fluxo de materiais do almoxarifado.",
       `<div class="dialog-notice" id="movement-guidance">Cada movimentação atualiza os saldos e mantém o histórico da operação.</div><div class="form-grid">${selectField("type", "Tipo de movimentação", enumOptions(types, prefill.type || "ENTRADA"), true)}${selectField("material_id", "Material", options(S.cache.materials, prefill.material_id), true)}${field("quantity", "Quantidade", "number", prefill.quantity || "", true, 'step="any" min="0.001" placeholder="0"')}<div class="field" id="movement-origin">${selectField("origin_id", "Local de origem", options(S.cache.locations, prefill.origin_id), true).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-destination">${selectField("destination_id", "Local de destino", options(S.cache.locations, prefill.destination_id), true).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-employee">${selectField("employee_id", "Funcionário", options(S.cache.employees, prefill.employee_id, "Sem empréstimo vinculado"), false).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-due">${field("due_date", "Previsão de devolução", "date", "").replace(/^<div class="field">|<\/div>$/g, "")}</div>${field("notes", "Observações", "textarea", "", false, 'maxlength="2000" placeholder="Informações que ajudam a acompanhar esta movimentação"')}</div>`,
       "Registrar movimentação",
-      async (form) => {
+      async (form, intent) => {
         const body = formData(form);
         const type = body.type;
         if (!["SAIDA", "TRANSFERENCIA"].includes(type)) delete body.origin_id;
@@ -1400,7 +1438,14 @@
         if (type !== "SAIDA") delete body.due_date;
         if (type === "TRANSFERENCIA" && body.origin_id === body.destination_id)
           throw new Error("Selecione locais diferentes para origem e destino.");
-        await api("/movements", { method: "POST", body });
+        const payload = JSON.stringify(body);
+        if (intent.payload !== null && intent.payload !== payload)
+          intent.key = crypto.randomUUID();
+        intent.payload = payload;
+        await api("/movements", {
+          method: "POST", body,
+          headers: { "Idempotency-Key": intent.key },
+        });
         toast("Movimentação registrada. Os saldos foram atualizados.");
         await route();
       },
@@ -1742,8 +1787,32 @@
       },
     );
   }
+  function openPassword() {
+    dialog(
+      "Trocar minha senha",
+      "Após a alteração, entre novamente em seus dispositivos.",
+      `<div class="form-grid">${field("current_password", "Senha atual", "password", "", true, 'autocomplete="current-password" maxlength="128"')}${field("new_password", "Nova senha", "password", "", true, 'autocomplete="new-password" minlength="10" maxlength="128"')}${field("confirm_password", "Confirmar nova senha", "password", "", true, 'autocomplete="new-password" minlength="10" maxlength="128"')}</div>`,
+      "Alterar senha",
+      async (form) => {
+        const data = formData(form);
+        if (data.new_password !== data.confirm_password)
+          throw new Error("A confirmação deve ser igual à nova senha.");
+        await api("/auth/password", {
+          method: "POST",
+          body: { current_password: data.current_password, new_password: data.new_password },
+        });
+        form.reset();
+        S.user = null;
+        S.cache = {};
+        S.setup = false;
+        showAuth();
+        toast("Senha alterada. Entre novamente com a nova senha.");
+      },
+    );
+  }
   const actions = {
-    refresh: () => route(),
+    refresh: refreshPage,
+    "change-password": openPassword,
     menu: () => openSidebar(),
     "new-movement": () => openMovement(),
     "show-loans": () => {
@@ -1877,7 +1946,7 @@
   $("#menu-toggle").onclick = openSidebar;
   $("#sidebar-close").onclick = closeSidebar;
   $("#sidebar-overlay").onclick = closeSidebar;
-  $("#refresh-button").onclick = () => route();
+  $("#refresh-button").onclick = refreshPage;
   $("#form-dialog").addEventListener("click", (e) => {
     if (e.target === $("#form-dialog")) {
       const r = e.target.getBoundingClientRect();
@@ -1902,6 +1971,15 @@
     );
   });
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Tab" && $("#sidebar").classList.contains("open") && sidebarMedia.matches) {
+      const focusable = $$("a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex='-1'])", $("#sidebar"))
+        .filter(el => el.getClientRects().length && !el.closest("[hidden]"));
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (!$("#sidebar").contains(document.activeElement) || (e.shiftKey && document.activeElement === first) || (!e.shiftKey && document.activeElement === last)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first)?.focus();
+      }
+    }
     if (
       e.key === "/" &&
       !e.ctrlKey &&
@@ -1919,6 +1997,7 @@
   $("#auth-lock").innerHTML = icon("lock");
   $(".workspace-icon").innerHTML = icon("building");
   $("#install-icon").innerHTML = icon("download");
+  $("#password-settings-icon").innerHTML = icon("lock");
   $("#logout-button").innerHTML = icon("logout");
   $("#menu-toggle").innerHTML = icon("menu");
   $("#sidebar-close").innerHTML = icon("close");

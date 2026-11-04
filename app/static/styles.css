@@ -10,7 +10,7 @@
   --lime: #d7ef88;
   --lime-soft: #f0f7df;
   --ink: #1f302b;
-  --muted: #77827b;
+  --muted: #5f7065;
   --line: #e5e9e2;
   --surface: #fff;
   --canvas: #f5f7f2;
@@ -469,7 +469,7 @@ textarea:focus {
   justify-content: center;
   gap: 7px;
   font-size: 10px;
-  color: #869488;
+  color: #5e7062;
   margin-top: 18px;
 }
 .auth-security svg {
@@ -479,13 +479,13 @@ textarea:focus {
 .auth-help {
   text-align: center;
   font-size: 10px;
-  color: #8b978e;
+  color: #5e7062;
   line-height: 1.6;
   margin-top: 23px;
 }
 .auth-panel-footer {
   font-size: 10px;
-  color: #98a395;
+  color: #5e7062;
 }
 .install-auth {
   width: 100%;
@@ -1195,10 +1195,11 @@ textarea:focus {
 }
 .quick-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 .quick-action {
+  min-width: 0;
   display: flex;
   gap: 10px;
   align-items: center;
@@ -1228,6 +1229,7 @@ textarea:focus {
   height: 16px;
 }
 .quick-action strong {
+  overflow-wrap: anywhere;
   font-size: 10px;
   display: block;
   font-weight: 600;

@@ -167,6 +167,9 @@
             <span class="nav-icon" id="install-icon"></span
             ><span>Instalar aplicativo</span><span class="small-arrow">↗</span>
           </button>
+          <button type="button" class="nav-link install-nav" data-action="change-password">
+            <span class="nav-icon" id="password-settings-icon"></span><span>Trocar minha senha</span>
+          </button>
           <div class="sidebar-user">
             <span id="user-avatar" class="avatar"></span
             ><span class="user-info"
@@ -190,6 +193,8 @@
               type="button"
               class="icon-button menu-toggle"
               aria-label="Abrir menu"
+              aria-controls="sidebar"
+              aria-expanded="false"
             ></button>
             <div class="breadcrumb">
               <span>Meu espaço</span><span class="breadcrumb-divider">/</span
@@ -254,7 +259,7 @@
       aria-live="polite"
       aria-atomic="false"
     ></div>
-    <dialog id="form-dialog" class="app-dialog">
+    <dialog id="form-dialog" class="app-dialog" aria-labelledby="dialog-title">
       <div id="dialog-content"></div>
     </dialog>
   </body>
