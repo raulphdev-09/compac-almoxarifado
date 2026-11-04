@@ -11,7 +11,7 @@ os.environ['COMPAC_COOKIE_SECURE']='0'
 temp = tempfile.TemporaryDirectory(prefix='compac-security-')
 os.environ['COMPAC_DB']=str(Path(temp.name)/'audit.db')
 from fastapi.testclient import TestClient
-from app.main import app, login_attempts
+from app.main import app
 from app.db import connect
 H={'X-Compac-Client':'web'}
 PASSWORD='Only-Audit-2026'
@@ -41,11 +41,9 @@ with TestClient(app, headers=H, client=('198.51.100.1', 50000)) as admin:
         with connect(write=True) as db:
             db.execute("UPDATE sessions SET expires_at='2000-01-01T00:00:00+00:00' WHERE token_hash=?",(hashlib.sha256(session.cookies.get('compac_session').encode()).hexdigest(),))
         result['expired_session_rejected']=session.get('/api/auth/me').status_code
-    login_attempts.clear()
     with TestClient(app,headers=H,client=('198.51.100.4',50000)) as bad:
         codes=[bad.post('/api/auth/login',json={'username':'audit-admin','password':'wrong-password'}).status_code for _ in range(11)]
         result['same_origin_11_failures']=codes
-    login_attempts.clear()
     with TestClient(app,headers=H,client=('198.51.100.5',50000)) as brute:
         cycles=[]
         for _ in range(3):
@@ -53,7 +51,6 @@ with TestClient(app, headers=H, client=('198.51.100.1', 50000)) as admin:
             good=brute.post('/api/auth/login',json={'username':'consulta','password':PASSWORD}).status_code
             cycles.append({'failed_target_attempts':dict(Counter(fails)),'other_account_valid_login':good})
         result['other_account_success_resets_target_protection']=cycles
-    login_attempts.clear()
     distributed=[]
     for index in range(12):
         with TestClient(app,headers=H,client=(f'198.51.100.{index+20}',50000)) as brute:

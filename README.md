@@ -2,6 +2,12 @@
 
 Aplicativo web em português para materiais, estoque por local, empréstimos e devoluções, requisições, chamados, patrimônio, manutenção, gastos, produtividade, previsão de consumo, alertas, exportação CSV e auditoria. Usa FastAPI, PostgreSQL na hospedagem gratuita e SQLite opcional no computador, com quantidades em milésimos, perfis de acesso e sessões de 8 horas. O banco começa vazio: nenhum dado real ou conta padrão acompanha o projeto.
 
+## Atualização de segurança e integridade (branch de desenvolvimento)
+
+A revisão `001_security_integrity` adiciona proteção de reenvio de movimentações, limites de login persistentes e troca própria de senha. Consulte [o relatório e o procedimento de migração](docs/FASE_B_SEGURANCA_INTEGRIDADE.md). No Render/PostgreSQL remoto, uma revisão pendente **não é aplicada automaticamente**: backup/restauração, autorização e `python -m app.migrate --apply` precisam preceder a publicação. O comando `python -m app.migrate --check` consulta o estado.
+
+Clientes de `POST /api/movements` precisam enviar `Idempotency-Key` por operação e reutilizá-la em retry do mesmo conteúdo; a interface desta versão já faz isso. A nova versão ainda não foi publicada em produção. Os testes de navegador da fase estão em `tests/browser_security_smoke.cjs` e usam somente dados descartáveis.
+
 ## Publicar gratuitamente: Render Free + Neon Free
 
 Esta configuração usa **Render Free para o site** e **Neon Free para guardar os dados em PostgreSQL**. O `render.yaml` não cria serviço pago, disco persistente nem banco pago na Render. Mantenha as duas contas no plano **Free** e respeite os limites desses serviços.
@@ -19,7 +25,7 @@ Esta configuração usa **Render Free para o site** e **Neon Free para guardar o
 1. Abra o botão acima na sua conta da Render e conecte o repositório do GitHub.
 2. Confira que o serviço está como **Free**, sem disco pago ou outros recursos pagos. O Blueprint não contrata recursos sozinho.
 3. Quando a Render pedir **DATABASE_URL**, cole a conexão copiada do Neon. Essa é uma variável secreta do serviço, não um arquivo do projeto.
-4. Confirme a criação e aguarde a publicação ficar saudável. A verificação de saúde é `/health`.
+4. Para esta revisão, prepare o banco antes da publicação: em ambiente administrativo autorizado, com `DATABASE_URL` em configuração segura, execute `python -m app.migrate --check` e, após backup/autorização, `python -m app.migrate --apply`. Isso não depende de shell no Render Free. Consulte o procedimento da fase B. Depois confirme a criação/publicação e aguarde `/health` ficar saudável.
 5. No painel do serviço, abra **Environment** e copie o valor gerado de **COMPAC_SETUP_TOKEN**. Esse é o código de ativação para criar seu primeiro administrador.
 6. Abra o endereço **HTTPS** fornecido pela Render, informe o código de ativação e crie seu administrador. O cadastro inicial fica indisponível depois dessa etapa.
 7. Cadastre categorias, obras, locais, funcionários e materiais; registre as entradas de estoque. Cada pessoa deve usar sua própria conta e perfil.

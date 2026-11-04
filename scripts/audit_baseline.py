@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -74,8 +75,7 @@ def scenario(size, samples):
             with connect() as db:
                 indexes = [dict(r) for r in db.execute("SELECT name,tbl_name,sql FROM sqlite_master WHERE type='index'")]
                 query_plans = [dict(r) for r in db.execute('EXPLAIN QUERY PLAN SELECT * FROM requisition_items WHERE requisition_id=?', (1,))]
-            from app.main import login_attempts
-            login_attempts.clear()
+
             assert client.post('/api/auth/login', json={'username': 'audit', 'password': 'Audit-Only-Discard-2026'}).status_code == 200
             results = []
             for path in ('/api/movements', '/api/requisitions', '/api/stock', '/api/dashboard', '/api/catalog/materials'):
@@ -100,7 +100,7 @@ def scenario(size, samples):
             write_times = []
             for _ in range(samples):
                 started = time.perf_counter()
-                response = client.post('/api/movements', json={'type': 'ENTRADA', 'material_id': 1, 'quantity': 1, 'destination_id': 1})
+                response = client.post('/api/movements', headers={'Idempotency-Key':str(uuid.uuid4())}, json={'type': 'ENTRADA', 'material_id': 1, 'quantity': 1, 'destination_id': 1})
                 write_times.append((time.perf_counter() - started) * 1000)
                 assert response.status_code == 201
             results.append(dict(path='POST /api/movements', samples=samples, p50_ms=round(statistics.median(write_times), 3),
