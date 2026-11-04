@@ -1,4 +1,5 @@
 import csv
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 from io import StringIO
@@ -43,7 +44,7 @@ def movement(client, catalog, kind, quantity, *, material=None, **fields):
     elif kind == "AJUSTE":
         data["destination_id"] = catalog["origin"]["id"]
     data.update(fields)
-    return client.post("/api/movements", json=data)
+    return client.post("/api/movements", json=data, headers={"Idempotency-Key": str(uuid.uuid4())})
 
 
 def stock(client, material_id, location_id=None):

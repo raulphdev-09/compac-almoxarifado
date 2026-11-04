@@ -44,7 +44,7 @@ def test_large_quantities_and_restart_persistence(admin, catalog, client_factory
     material = catalog['material']['id']
     # More than 2^31 milliunits proves PostgreSQL uses 64-bit quantities.
     amount = 3_000_000.125
-    response = admin.post('/api/movements', json={
+    response = admin.post('/api/movements', headers={'Idempotency-Key': 'large-quantity-once'}, json={
         'type': 'ENTRADA', 'material_id': material, 'quantity': amount,
         'destination_id': catalog['origin']['id'],
     })

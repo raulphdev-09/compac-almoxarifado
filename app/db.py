@@ -164,13 +164,23 @@ def connect(write=False):
     finally:
         connection.close()
 
-def init_db():
+def init_db(*, allow_migrations=None):
+    from .migrations import migrate
+
     if os.getenv('RENDER') == 'true' and not os.getenv('COMPAC_SETUP_TOKEN'):
         raise RuntimeError('Configure COMPAC_SETUP_TOKEN antes de publicar o serviço.')
-    if os.getenv('DATABASE_URL', '').strip():
-        with connect(write=True) as db:
-            db.executescript(POSTGRES_SCHEMA)
-    else:
+    if allow_migrations is None:
+        # Production upgrades require the explicit CLI, after backup/approval.
+        url = os.getenv('DATABASE_URL', '').strip()
+        local = not url or postgres_options(url).get('host') in ('localhost', '127.0.0.1', '::1')
+        allow_migrations = os.getenv('RENDER') != 'true' and local
+    if not os.getenv('DATABASE_URL', '').strip():
         with connect() as db:
             db.execute('PRAGMA journal_mode=WAL')
-            db.executescript(SCHEMA)
+    with connect(write=True) as db:
+        if allow_migrations:
+            schema = POSTGRES_SCHEMA if db.postgres else SCHEMA
+            for statement in schema.split(';'):
+                if statement.strip():
+                    db.execute(statement)
+        migrate(db, allow_apply=allow_migrations)

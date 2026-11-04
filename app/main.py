@@ -6,13 +6,10 @@ import json
 import os
 import secrets
 import sqlite3
-import time
-from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
-from threading import Lock
 from zoneinfo import ZoneInfo
 
 import psycopg
@@ -21,12 +18,14 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from .catalog import ENTITIES
 from .db import connect, init_db
+from .security import (
+    FAILURE_WINDOW_SECONDS, credential_keys, failure_state, limited,
+    mutation_origin_allowed, record_failure,
+)
 
 STATIC = Path(__file__).parent / 'static'
 ROLES = ['ADMIN', 'OPERADOR', 'CONSULTA']
 PRIORITIES = ['BAIXA', 'NORMAL', 'ALTA', 'URGENTE']
-login_attempts = defaultdict(deque)
-login_lock = Lock()
 
 
 def now():
@@ -147,15 +146,13 @@ app.mount('/static', StaticFiles(directory=STATIC), name='static')
 
 @app.middleware('http')
 async def security(request: Request, call_next):
+    rejection = None
     if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
-        if request.headers.get('x-compac-client') != 'web':
-            return JSONResponse({'detail': 'Cabeçalho de proteção ausente.'}, status_code=403)
         # Use a server-controlled public URL behind Render's TLS terminator.
         expected = (os.getenv('COMPAC_PUBLIC_URL') or os.getenv('RENDER_EXTERNAL_URL') or str(request.base_url)).rstrip('/')
-        origin = request.headers.get('origin')
-        if origin and origin != expected:
-            return JSONResponse({'detail': 'Origem não autorizada.'}, status_code=403)
-    response = await call_next(request)
+        if not mutation_origin_allowed(request, expected):
+            rejection = JSONResponse({'detail': 'Requisição de origem não autorizada.'}, status_code=403)
+    response = rejection if rejection is not None else await call_next(request)
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['Referrer-Policy'] = 'same-origin'
@@ -235,24 +232,71 @@ def setup(data: dict):
 def login(data: dict, request: Request):
     username = text(data.get('username'), 'Usuário', maximum=80)
     value = text(data.get('password'), 'Senha', maximum=128)
-    host = request.client.host if request.client else 'local'
-    with login_lock:
-        attempts = login_attempts[host]
-        cutoff = time.monotonic() - 300
-        while attempts and attempts[0] < cutoff:
-            attempts.popleft()
-        if len(attempts) >= 10:
-            fail('Muitas tentativas. Aguarde cinco minutos.', 429)
-        attempts.append(time.monotonic())
+    account_hash, origin_hash = credential_keys(username, request)
     with connect(write=True) as db:
+        state = failure_state(db, account_hash, origin_hash)
+        if limited(state):
+            return credential_limit_response()
         row = db.execute('SELECT * FROM users WHERE LOWER(username)=LOWER(?) AND active=1', (username,)).fetchone()
         encoded = row['password_hash'] if row else '00'*16 + ':' + '00'*64
         if not verify_password(value, encoded) or row is None:
-            fail('Usuário ou senha inválidos.', 401)
-        with login_lock:
-            login_attempts.pop(host, None)
+            failed_credential(db, account_hash, origin_hash, state, 'LOGIN_FALHOU')
+            # Return a response instead of raising: failures and their audit
+            # must commit even though authentication is rejected.
+            return JSONResponse({'detail': 'Usuário ou senha inválidos.'}, status_code=401)
         audit(db, row['id'], 'LOGIN', 'users', row['id'])
         return session_response(db, row)
+
+
+def credential_limit_response():
+    return JSONResponse(
+        {'detail': 'Muitas tentativas. Aguarde cinco minutos.'}, status_code=429,
+        headers={'Retry-After': str(FAILURE_WINDOW_SECONDS)},
+    )
+
+
+def failed_credential(db, account_hash, origin_hash, state, action):
+    timestamp, account_count, origin_count = state
+    record_failure(db, account_hash, origin_hash, timestamp)
+    details = {'account_hash': account_hash, 'origin_hash': origin_hash}
+    audit(db, None, action, 'authentication', details=details)
+    # Emit the block event at the threshold, not on every blocked request.
+    if limited((timestamp, account_count + 1, origin_count + 1)):
+        audit(db, None, 'CREDENCIAL_BLOQUEADA', 'authentication', details=details)
+
+
+@app.post('/api/auth/password')
+def change_own_password(data: dict, request: Request, user=Depends(current_user)):
+    if set(data) != {'current_password', 'new_password'}:
+        fail('Informe a senha atual e a nova senha.')
+    current = text(data['current_password'], 'Senha atual', maximum=128)
+    replacement = password(data['new_password'])
+    with connect(write=True) as db:
+        # Recheck the session while holding the writer lock: a concurrently
+        # revoked cookie cannot change credentials after its revocation.
+        token_hash = hashlib.sha256(request.cookies.get('compac_session', '').encode()).hexdigest()
+        row = db.execute(
+            'SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id '
+            'WHERE u.id=? AND s.token_hash=? AND s.expires_at>? AND u.active=1',
+            (user['id'], token_hash, now()),
+        ).fetchone()
+        if not row:
+            fail('Entre na sua conta para continuar.', 401)
+        account_hash, origin_hash = credential_keys(row['username'], request)
+        state = failure_state(db, account_hash, origin_hash)
+        if limited(state):
+            return credential_limit_response()
+        if not verify_password(current, row['password_hash']):
+            failed_credential(db, account_hash, origin_hash, state, 'TROCA_SENHA_FALHOU')
+            return JSONResponse({'detail': 'Senha atual inválida.'}, status_code=403)
+        if hmac.compare_digest(current.encode(), replacement.encode()):
+            fail('Escolha uma senha diferente da atual.')
+        db.execute('UPDATE users SET password_hash=? WHERE id=?', (hash_password(replacement), row['id']))
+        db.execute('DELETE FROM sessions WHERE user_id=?', (row['id'],))
+        audit(db, row['id'], 'TROCAR_SENHA', 'users', row['id'])
+        response = JSONResponse({'ok': True, 'reauthenticate': True})
+        response.delete_cookie('compac_session')
+        return response
 
 
 @app.post('/api/auth/logout')
@@ -373,6 +417,12 @@ def update_entity(entity: str, key: int, data: dict, user=Depends(operator)):
     with connect(write=True) as db:
         previous = dict(reference(db, entity, key))
         values = validate_entity(db, entity, data)
+        if entity == 'materials' and any(values[field] != previous[field] for field in ('unit', 'individualizable')):
+            # Historical amounts and asset identity use this material's unit
+            # and mode. Even zero balances/closed loans retain that meaning.
+            history_tables = ('balances', 'movements', 'loans', 'equipment', 'requisition_items', 'expenses', 'consumption_profiles')
+            if any(db.execute(f'SELECT 1 FROM {table} WHERE material_id=? LIMIT 1', (key,)).fetchone() for table in history_tables):
+                fail('Unidade e controle patrimonial não podem ser alterados após vínculos de estoque, patrimônio ou histórico operacional.', 409)
         if entity == 'equipment' and values['status'] != 'MANUTENCAO' and db.execute("SELECT 1 FROM maintenance WHERE equipment_id=? AND status='ABERTA'", (key,)).fetchone():
             fail('Conclua a manutenção antes de liberar o patrimônio.')
         db.execute(f"UPDATE {entity} SET {','.join(k+'=?' for k in values)} WHERE id=?", (*values.values(), key))
@@ -449,9 +499,15 @@ def perform_movement(db, data, user, requisition=None):
 
 
 @app.post('/api/movements', status_code=201)
-def add_movement(data: dict, user=Depends(operator)):
+def add_movement(data: dict, request: Request, user=Depends(operator)):
+    from .idempotency import replay_or_execute, validate_key
+
+    key = validate_key(request.headers.get('Idempotency-Key'))
     with connect(write=True) as db:
-        return {'id': perform_movement(db, data, user)}
+        return replay_or_execute(
+            db, user['id'], 'POST /api/movements', key, data,
+            lambda: {'id': perform_movement(db, data, user)},
+        )
 
 
 @app.get('/api/movements')

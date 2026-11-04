@@ -43,6 +43,11 @@ def client_factory(tmp_path, monkeypatch, request):
             isolated_url = urlunsplit(parts._replace(query=urlencode(params, quote_via=quote)))
             monkeypatch.setenv('DATABASE_URL', isolated_url)
 
+        # Provision the disposable database before simulating production settings.
+        # Real Render upgrades require the explicit migration CLI.
+        from app.db import init_db
+        init_db()
+
         def make_client(*, environment=None, base_url="http://testserver"):
             for name, value in (environment or {}).items():
                 if value is None:
@@ -50,9 +55,7 @@ def client_factory(tmp_path, monkeypatch, request):
                 else:
                     monkeypatch.setenv(name, str(value))
 
-            from app.main import app, login_attempts
-
-            login_attempts.clear()
+            from app.main import app
             return stack.enter_context(
                 TestClient(app, base_url=base_url, headers=WRITE_HEADERS)
             )
