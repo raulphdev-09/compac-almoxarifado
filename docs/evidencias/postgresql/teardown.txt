@@ -1,0 +1,4 @@
+Cluster local descartável encerrado após todos os probes.
+pg_ctl status: no server running
+pg_isready: 127.0.0.1:55439 - no response
+Dados e configurações de produção não acessados.

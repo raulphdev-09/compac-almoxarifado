@@ -1,0 +1,93 @@
+{
+  "setup": 200,
+  "cookie_flags_local": true,
+  "public_openapi": 200,
+  "unauthenticated_private_gets": {
+    "/api/users": 401,
+    "/api/schema": 401,
+    "/api/catalog/materials": 401,
+    "/api/movements": 401,
+    "/api/stock": 401,
+    "/api/loans": 401,
+    "/api/requisitions": 401,
+    "/api/tickets": 401,
+    "/api/maintenance": 401,
+    "/api/alerts": 401,
+    "/api/dashboard": 401,
+    "/api/audit": 401,
+    "/api/export/stock": 401
+  },
+  "sql_injection_login": 401,
+  "readonly_write": 403,
+  "readonly_create_admin": 403,
+  "readonly_audit": 403,
+  "readonly_users": 200,
+  "readonly_users_fields": [
+    "active",
+    "id",
+    "name",
+    "role",
+    "username"
+  ],
+  "session_token_rotates_on_login": true,
+  "cookie_flags": {
+    "httponly": true,
+    "samesite=strict": true,
+    "max-age=28800": true
+  },
+  "expired_session_rejected": 401,
+  "same_origin_11_failures": [
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    429
+  ],
+  "other_account_success_resets_target_protection": [
+    {
+      "failed_target_attempts": {
+        "401": 9
+      },
+      "other_account_valid_login": 200
+    },
+    {
+      "failed_target_attempts": {
+        "401": 9
+      },
+      "other_account_valid_login": 200
+    },
+    {
+      "failed_target_attempts": {
+        "401": 9
+      },
+      "other_account_valid_login": 200
+    }
+  ],
+  "same_account_12_origins": [
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401,
+    401
+  ],
+  "evil_origin": 403,
+  "evil_referer_no_origin_custom_header": 201,
+  "missing_custom_header": 403,
+  "failed_login_audit_events": 0,
+  "stored_password_plaintext": false,
+  "scrypt_salt_bytes": 16,
+  "scrypt_digest_bytes": 64
+}

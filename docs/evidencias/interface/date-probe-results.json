@@ -1,0 +1,94 @@
+{
+  "contrast": [
+    {
+      "selector": "#auth-description",
+      "text": "Crie o primeiro administrador da sua operação.",
+      "color": "rgb(119, 130, 123)",
+      "fontSize": "13px",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 3.99
+    },
+    {
+      "selector": "#auth-help",
+      "text": "O administrador poderá cadastrar a equipe após a configuração.",
+      "color": "rgb(139, 151, 142)",
+      "fontSize": "10px",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 3.04
+    },
+    {
+      "selector": ".auth-security",
+      "text": "Acesso seguro. Seus dados, sob controle.",
+      "color": "rgb(134, 148, 136)",
+      "fontSize": "10px",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 3.18
+    }
+  ],
+  "dashboardQuickActions": {
+    "panel": {
+      "left": 958.796875,
+      "right": 1406
+    },
+    "gridWidth": 405,
+    "scrollWidth": 606,
+    "children": [
+      {
+        "text": "Consultar estoque\nSaldos e disponibilidade",
+        "left": 979.796875,
+        "right": 1122.734375,
+        "clipped": false
+      },
+      {
+        "text": "Nova requisição\nMateriais para a obra",
+        "left": 1134.734375,
+        "right": 1274.765625,
+        "clipped": false
+      },
+      {
+        "text": "Abrir chamado\nConecte a sua equipe",
+        "left": 1286.765625,
+        "right": 1420.671875,
+        "clipped": true
+      },
+      {
+        "text": "Empréstimos\nMateriais com a equipe",
+        "left": 1432.671875,
+        "right": 1586.03125,
+        "clipped": true
+      }
+    ]
+  },
+  "dialogAX": [
+    {
+      "role": "dialog",
+      "name": ""
+    }
+  ],
+  "initialStockFields": [
+    "code",
+    "description",
+    "category_id",
+    "unit",
+    "minimum_stock",
+    "individualizable",
+    "status"
+  ],
+  "categoryUpdateHTTP": 200,
+  "staleRelationAfterRefresh": {
+    "oldVisible": true,
+    "newVisible": false,
+    "serverCategory": "Categoria atualizada"
+  },
+  "dateDefault": {
+    "localDate": "2026-11-04",
+    "purchaseDate": "2026-11-05"
+  },
+  "sidebarFocus": {
+    "activeOnOpen": "menu-toggle",
+    "activeAfterTab": {
+      "id": "global-search",
+      "inSidebar": false
+    }
+  }
+}

@@ -1,0 +1,48 @@
+import json, sys
+from pathlib import Path
+import psycopg
+from psycopg import sql
+sys.path.insert(0, '/workspace/compac-almoxarifado')
+from app.db import POSTGRES_SCHEMA
+DSN='postgresql://compac_audit@127.0.0.1:55439/compac_audit'
+QUERIES={
+ 'movements_list': ('SELECT m.*,mat.description material,mat.unit,o.name origin,d.name destination,e.name employee,u.name author FROM movements m JOIN materials mat ON mat.id=m.material_id LEFT JOIN locations o ON o.id=m.origin_id LEFT JOIN locations d ON d.id=m.destination_id LEFT JOIN employees e ON e.id=m.employee_id JOIN users u ON u.id=m.user_id ORDER BY m.id DESC',()),
+ 'loans_open': ("SELECT p.*,e.name employee,m.description material,m.unit,l.name location FROM loans p JOIN employees e ON e.id=p.employee_id JOIN materials m ON m.id=p.material_id JOIN locations l ON l.id=p.location_id WHERE p.quantity>0 ORDER BY COALESCE(p.due_date,'9999'),p.id",()),
+ 'requisition_items': ('SELECT i.*,m.description material,m.unit FROM requisition_items i JOIN materials m ON m.id=i.material_id WHERE i.requisition_id=%s',(1,)),
+ 'stock_rows': ('SELECT m.id material_id,m.code,m.description material,m.unit,m.minimum_stock,b.location_id,l.name location,l.work_id,COALESCE(b.quantity,0)/1000.0 quantity FROM materials m LEFT JOIN balances b ON b.material_id=m.id LEFT JOIN locations l ON l.id=b.location_id ORDER BY m.description,l.name',()),
+ 'expense_by_work': ("SELECT COALESCE(w.name,'Sem obra') name,ROUND(SUM(e.total_cost),2) total FROM expenses e LEFT JOIN works w ON w.id=e.work_id GROUP BY e.work_id,w.name ORDER BY total DESC",()),
+}
+results=[]
+for n in (100,1000,10000):
+ schema='compac_bench_'+str(n)
+ with psycopg.connect(DSN,autocommit=True) as conn:
+  conn.execute(sql.SQL('DROP SCHEMA IF EXISTS {} CASCADE').format(sql.Identifier(schema)))
+  conn.execute(sql.SQL('CREATE SCHEMA {}').format(sql.Identifier(schema)))
+ with psycopg.connect(DSN) as conn:
+  conn.execute(sql.SQL('SET search_path TO {}').format(sql.Identifier(schema)))
+  for statement in POSTGRES_SCHEMA.split(';'):
+   if statement.strip():conn.execute(statement)
+  conn.execute("INSERT INTO users(username,name,password_hash,role,created_at) VALUES('audit','Fictício','not-a-real-hash','ADMIN','2026-11-04')")
+  conn.execute("INSERT INTO works(code,name,status) VALUES('TESTE','Obra fictícia','ATIVA')")
+  conn.execute("INSERT INTO categories(name) VALUES('Teste')")
+  conn.execute("INSERT INTO locations(name,work_id) VALUES('Depósito fictício',1)")
+  conn.execute("INSERT INTO employees(registration,name,job_title,work_id,status) VALUES('TESTE','Fictício','Teste',1,'ATIVO')")
+  with conn.cursor() as cur:
+   cur.executemany("INSERT INTO materials(code,description,category_id,unit,status) VALUES(%s,%s,1,'UN','ATIVO')",[(f'M-{i}',f'Material fictício {i}') for i in range(1,51)])
+   cur.executemany('INSERT INTO balances(material_id,location_id,quantity) VALUES(%s,1,100000)',[(i,) for i in range(1,51)])
+   cur.executemany("INSERT INTO movements(type,material_id,quantity,destination_id,user_id,created_at) VALUES('ENTRADA',%s,1000,1,1,'2026-11-04')",[(i%50+1,) for i in range(n)])
+   cur.executemany("INSERT INTO loans(employee_id,material_id,location_id,quantity,due_date,movement_id,created_at) VALUES(1,%s,1,%s,'2026-11-05',%s,'2026-11-04')",[(i%50+1,1000 if i%2 else 0,i+1) for i in range(n)])
+   cur.executemany("INSERT INTO requisitions(work_id,requester_id,priority,created_at) VALUES(1,1,'NORMAL','2026-11-04')",[() for _ in range(n//10)])
+   cur.executemany('INSERT INTO requisition_items(requisition_id,material_id,quantity) VALUES(%s,%s,1000)',[(i//10+1,i%50+1) for i in range(n)])
+   cur.executemany("INSERT INTO expenses(supplier,purchase_date,material_id,work_id,quantity,unit_cost,total_cost) VALUES('Fornecedor fictício','2026-11-04',%s,1,1,10,10)",[(i%50+1,) for i in range(n//10)])
+  conn.commit()
+  conn.execute('ANALYZE')
+  for name,(query,args) in QUERIES.items():
+   conn.execute('EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) '+query,args).fetchone()
+   plan=conn.execute('EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) '+query,args).fetchone()[0][0]
+   def nodes(p):
+    return [dict(node=p['Node Type'],relation=p.get('Relation Name'),rows=p.get('Actual Rows'),removed=p.get('Rows Removed by Filter'),loops=p.get('Actual Loops'))]+[v for c in p.get('Plans',[]) for v in nodes(c)]
+   results.append({'movements':n,'query':name,'planning_ms':plan['Planning Time'],'execution_ms':plan['Execution Time'],'returned_rows':plan['Plan']['Actual Rows'],'nodes':nodes(plan['Plan'])})
+   Path(f'/tmp/compac-pg/evidence/{n}-{name}.json').write_text(json.dumps(plan,indent=2))
+Path('/tmp/compac-pg/evidence/explain-summary.json').write_text(json.dumps(results,indent=2))
+for r in results: print(json.dumps(r,ensure_ascii=False))

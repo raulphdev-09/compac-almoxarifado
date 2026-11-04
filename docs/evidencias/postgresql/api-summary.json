@@ -1,0 +1,92 @@
+[
+  {
+    "n_movements": 100,
+    "endpoint": "/api/movements",
+    "samples": 20,
+    "p50_ms": 10.142,
+    "p95_nearest_rank_ms": 11.077,
+    "p99_nearest_rank_ms": 11.084,
+    "db_statements": 2,
+    "response_bytes": 31857
+  },
+  {
+    "n_movements": 100,
+    "endpoint": "/api/requisitions",
+    "samples": 20,
+    "p50_ms": 10.035,
+    "p95_nearest_rank_ms": 10.642,
+    "p99_nearest_rank_ms": 10.956,
+    "db_statements": 12,
+    "response_bytes": 12498
+  },
+  {
+    "n_movements": 100,
+    "endpoint": "/api/dashboard",
+    "samples": 20,
+    "p50_ms": 9.765,
+    "p95_nearest_rank_ms": 10.135,
+    "p99_nearest_rank_ms": 11.395,
+    "db_statements": 11,
+    "response_bytes": 992
+  },
+  {
+    "n_movements": 1000,
+    "endpoint": "/api/movements",
+    "samples": 20,
+    "p50_ms": 32.474,
+    "p95_nearest_rank_ms": 35.233,
+    "p99_nearest_rank_ms": 35.437,
+    "db_statements": 2,
+    "response_bytes": 319534
+  },
+  {
+    "n_movements": 1000,
+    "endpoint": "/api/requisitions",
+    "samples": 20,
+    "p50_ms": 43.28,
+    "p95_nearest_rank_ms": 54.343,
+    "p99_nearest_rank_ms": 65.82,
+    "db_statements": 102,
+    "response_bytes": 126846
+  },
+  {
+    "n_movements": 1000,
+    "endpoint": "/api/dashboard",
+    "samples": 20,
+    "p50_ms": 9.262,
+    "p95_nearest_rank_ms": 11.253,
+    "p99_nearest_rank_ms": 12.419,
+    "db_statements": 11,
+    "response_bytes": 1002
+  },
+  {
+    "n_movements": 10000,
+    "endpoint": "/api/movements",
+    "samples": 20,
+    "p50_ms": 269.886,
+    "p95_nearest_rank_ms": 450.937,
+    "p99_nearest_rank_ms": 512.301,
+    "db_statements": 2,
+    "response_bytes": 3205295
+  },
+  {
+    "n_movements": 10000,
+    "endpoint": "/api/requisitions",
+    "samples": 20,
+    "p50_ms": 649.361,
+    "p95_nearest_rank_ms": 707.301,
+    "p99_nearest_rank_ms": 720.669,
+    "db_statements": 1002,
+    "response_bytes": 1289118
+  },
+  {
+    "n_movements": 10000,
+    "endpoint": "/api/dashboard",
+    "samples": 20,
+    "p50_ms": 12.0,
+    "p95_nearest_rank_ms": 13.239,
+    "p99_nearest_rank_ms": 13.974,
+    "db_statements": 11,
+    "response_bytes": 1012
+  }
+]

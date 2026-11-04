@@ -1,0 +1,408 @@
+{
+  "timestamp": "2026-11-04T18:28:45.738699-03:00",
+  "commit": "6a24fa763995cc52322b7c618ef9f8b95cbb369d",
+  "python": "3.12.14",
+  "sqlite": "3.53.1",
+  "method": "warmed sequential in-process TestClient requests; no external network, not a load test",
+  "scenarios": [
+    {
+      "initial_movements": 100,
+      "materials": 10,
+      "requisitions": 10,
+      "loans": 0,
+      "expenses": 0,
+      "tickets": 0,
+      "results": [
+        {
+          "path": "/api/movements",
+          "samples": 30,
+          "p50_ms": 5.021,
+          "p95_ms": 5.705,
+          "p99_ms": 6.204,
+          "response_bytes": 37603,
+          "sql_statements": 2
+        },
+        {
+          "path": "/api/requisitions",
+          "samples": 30,
+          "p50_ms": 2.876,
+          "p95_ms": 3.219,
+          "p99_ms": 3.317,
+          "response_bytes": 3235,
+          "sql_statements": 12
+        },
+        {
+          "path": "/api/stock",
+          "samples": 30,
+          "p50_ms": 2.632,
+          "p95_ms": 3.228,
+          "p99_ms": 3.235,
+          "response_bytes": 1822,
+          "sql_statements": 2
+        },
+        {
+          "path": "/api/dashboard",
+          "samples": 30,
+          "p50_ms": 3.267,
+          "p95_ms": 3.55,
+          "p99_ms": 3.596,
+          "response_bytes": 1160,
+          "sql_statements": 11
+        },
+        {
+          "path": "/api/catalog/materials",
+          "samples": 30,
+          "p50_ms": 3.025,
+          "p95_ms": 3.305,
+          "p99_ms": 3.769,
+          "response_bytes": 1572,
+          "sql_statements": 2
+        },
+        {
+          "path": "POST /api/movements",
+          "samples": 30,
+          "p50_ms": 2.859,
+          "p95_ms": 3.41,
+          "p99_ms": 3.71
+        }
+      ],
+      "indexes": [
+        {
+          "name": "sqlite_autoindex_users_1",
+          "tbl_name": "users",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_sessions_1",
+          "tbl_name": "sessions",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_works_1",
+          "tbl_name": "works",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_categories_1",
+          "tbl_name": "categories",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_locations_1",
+          "tbl_name": "locations",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_employees_1",
+          "tbl_name": "employees",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_materials_1",
+          "tbl_name": "materials",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_equipment_1",
+          "tbl_name": "equipment",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_balances_1",
+          "tbl_name": "balances",
+          "sql": null
+        },
+        {
+          "name": "open_maintenance",
+          "tbl_name": "maintenance",
+          "sql": "CREATE UNIQUE INDEX open_maintenance ON maintenance(equipment_id) WHERE status='ABERTA'"
+        },
+        {
+          "name": "movement_date",
+          "tbl_name": "movements",
+          "sql": "CREATE INDEX movement_date ON movements(created_at)"
+        },
+        {
+          "name": "ticket_status",
+          "tbl_name": "tickets",
+          "sql": "CREATE INDEX ticket_status ON tickets(status)"
+        }
+      ],
+      "requisition_item_query_plan": [
+        {
+          "id": 2,
+          "parent": 0,
+          "notused": 216,
+          "detail": "SCAN requisition_items"
+        }
+      ],
+      "sqlite_snapshot_restore": "all_tables_equal"
+    },
+    {
+      "initial_movements": 1000,
+      "materials": 100,
+      "requisitions": 100,
+      "loans": 0,
+      "expenses": 0,
+      "tickets": 0,
+      "results": [
+        {
+          "path": "/api/movements",
+          "samples": 30,
+          "p50_ms": 27.377,
+          "p95_ms": 29.115,
+          "p99_ms": 45.932,
+          "response_bytes": 377814,
+          "sql_statements": 2
+        },
+        {
+          "path": "/api/requisitions",
+          "samples": 30,
+          "p50_ms": 5.935,
+          "p95_ms": 7.673,
+          "p99_ms": 9.507,
+          "response_bytes": 32669,
+          "sql_statements": 102
+        },
+        {
+          "path": "/api/stock",
+          "samples": 30,
+          "p50_ms": 5.232,
+          "p95_ms": 7.806,
+          "p99_ms": 7.984,
+          "response_bytes": 18293,
+          "sql_statements": 2
+        },
+        {
+          "path": "/api/dashboard",
+          "samples": 30,
+          "p50_ms": 3.354,
+          "p95_ms": 8.611,
+          "p99_ms": 11.839,
+          "response_bytes": 1168,
+          "sql_statements": 11
+        },
+        {
+          "path": "/api/catalog/materials",
+          "samples": 30,
+          "p50_ms": 3.918,
+          "p95_ms": 7.258,
+          "p99_ms": 7.693,
+          "response_bytes": 15793,
+          "sql_statements": 2
+        },
+        {
+          "path": "POST /api/movements",
+          "samples": 30,
+          "p50_ms": 2.576,
+          "p95_ms": 2.998,
+          "p99_ms": 3.008
+        }
+      ],
+      "indexes": [
+        {
+          "name": "sqlite_autoindex_users_1",
+          "tbl_name": "users",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_sessions_1",
+          "tbl_name": "sessions",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_works_1",
+          "tbl_name": "works",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_categories_1",
+          "tbl_name": "categories",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_locations_1",
+          "tbl_name": "locations",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_employees_1",
+          "tbl_name": "employees",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_materials_1",
+          "tbl_name": "materials",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_equipment_1",
+          "tbl_name": "equipment",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_balances_1",
+          "tbl_name": "balances",
+          "sql": null
+        },
+        {
+          "name": "open_maintenance",
+          "tbl_name": "maintenance",
+          "sql": "CREATE UNIQUE INDEX open_maintenance ON maintenance(equipment_id) WHERE status='ABERTA'"
+        },
+        {
+          "name": "movement_date",
+          "tbl_name": "movements",
+          "sql": "CREATE INDEX movement_date ON movements(created_at)"
+        },
+        {
+          "name": "ticket_status",
+          "tbl_name": "tickets",
+          "sql": "CREATE INDEX ticket_status ON tickets(status)"
+        }
+      ],
+      "requisition_item_query_plan": [
+        {
+          "id": 2,
+          "parent": 0,
+          "notused": 216,
+          "detail": "SCAN requisition_items"
+        }
+      ],
+      "sqlite_snapshot_restore": "all_tables_equal"
+    },
+    {
+      "initial_movements": 10000,
+      "materials": 1000,
+      "requisitions": 1000,
+      "loans": 0,
+      "expenses": 0,
+      "tickets": 0,
+      "results": [
+        {
+          "path": "/api/movements",
+          "samples": 30,
+          "p50_ms": 239.901,
+          "p95_ms": 317.08,
+          "p99_ms": 349.603,
+          "response_bytes": 3797825,
+          "sql_statements": 2
+        },
+        {
+          "path": "/api/requisitions",
+          "samples": 30,
+          "p50_ms": 53.278,
+          "p95_ms": 74.626,
+          "p99_ms": 89.009,
+          "response_bytes": 330573,
+          "sql_statements": 1002
+        },
+        {
+          "path": "/api/stock",
+          "samples": 30,
+          "p50_ms": 15.425,
+          "p95_ms": 18.49,
+          "p99_ms": 18.661,
+          "response_bytes": 183894,
+          "sql_statements": 2
+        },
+        {
+          "path": "/api/dashboard",
+          "samples": 30,
+          "p50_ms": 2.763,
+          "p95_ms": 3.05,
+          "p99_ms": 3.099,
+          "response_bytes": 1176,
+          "sql_statements": 11
+        },
+        {
+          "path": "/api/catalog/materials",
+          "samples": 30,
+          "p50_ms": 14.04,
+          "p95_ms": 15.596,
+          "p99_ms": 30.324,
+          "response_bytes": 158894,
+          "sql_statements": 2
+        },
+        {
+          "path": "POST /api/movements",
+          "samples": 30,
+          "p50_ms": 2.425,
+          "p95_ms": 2.674,
+          "p99_ms": 2.817
+        }
+      ],
+      "indexes": [
+        {
+          "name": "sqlite_autoindex_users_1",
+          "tbl_name": "users",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_sessions_1",
+          "tbl_name": "sessions",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_works_1",
+          "tbl_name": "works",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_categories_1",
+          "tbl_name": "categories",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_locations_1",
+          "tbl_name": "locations",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_employees_1",
+          "tbl_name": "employees",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_materials_1",
+          "tbl_name": "materials",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_equipment_1",
+          "tbl_name": "equipment",
+          "sql": null
+        },
+        {
+          "name": "sqlite_autoindex_balances_1",
+          "tbl_name": "balances",
+          "sql": null
+        },
+        {
+          "name": "open_maintenance",
+          "tbl_name": "maintenance",
+          "sql": "CREATE UNIQUE INDEX open_maintenance ON maintenance(equipment_id) WHERE status='ABERTA'"
+        },
+        {
+          "name": "movement_date",
+          "tbl_name": "movements",
+          "sql": "CREATE INDEX movement_date ON movements(created_at)"
+        },
+        {
+          "name": "ticket_status",
+          "tbl_name": "tickets",
+          "sql": "CREATE INDEX ticket_status ON tickets(status)"
+        }
+      ],
+      "requisition_item_query_plan": [
+        {
+          "id": 2,
+          "parent": 0,
+          "notused": 216,
+          "detail": "SCAN requisition_items"
+        }
+      ],
+      "sqlite_snapshot_restore": "all_tables_equal"
+    }
+  ]
+}

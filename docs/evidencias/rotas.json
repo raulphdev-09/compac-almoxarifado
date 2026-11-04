@@ -1,0 +1,335 @@
+[
+  {
+    "method": "GET",
+    "path": "/",
+    "function": "index",
+    "line": 175,
+    "authorization": [
+      "public"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/manifest.webmanifest",
+    "function": "manifest",
+    "line": 180,
+    "authorization": [
+      "public"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/sw.js",
+    "function": "worker",
+    "line": 185,
+    "authorization": [
+      "public"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/offline.html",
+    "function": "offline",
+    "line": 190,
+    "authorization": [
+      "public"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/health",
+    "function": "health",
+    "line": 195,
+    "authorization": [
+      "public"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/status",
+    "function": "auth_status",
+    "line": 202,
+    "authorization": [
+      "public"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/setup",
+    "function": "setup",
+    "line": 218,
+    "authorization": [
+      "public"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/login",
+    "function": "login",
+    "line": 235,
+    "authorization": [
+      "public"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/logout",
+    "function": "logout",
+    "line": 259,
+    "authorization": [
+      "public"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/me",
+    "function": "me",
+    "line": 268,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/users",
+    "function": "users",
+    "line": 273,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/users",
+    "function": "add_user",
+    "line": 279,
+    "authorization": [
+      "Depends(administrator)"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/users/{key}",
+    "function": "edit_user",
+    "line": 293,
+    "authorization": [
+      "Depends(administrator)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/schema",
+    "function": "schema",
+    "line": 311,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/catalog/{entity}",
+    "function": "list_entity",
+    "line": 351,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/catalog/{entity}",
+    "function": "create_entity",
+    "line": 359,
+    "authorization": [
+      "Depends(operator)"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/api/catalog/{entity}/{key}",
+    "function": "update_entity",
+    "line": 370,
+    "authorization": [
+      "Depends(operator)"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/movements",
+    "function": "add_movement",
+    "line": 452,
+    "authorization": [
+      "Depends(operator)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/movements",
+    "function": "movements",
+    "line": 458,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/stock",
+    "function": "stock",
+    "line": 468,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/loans",
+    "function": "loans",
+    "line": 474,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/requisitions",
+    "function": "requisitions",
+    "line": 480,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/requisitions",
+    "function": "add_requisition",
+    "line": 489,
+    "authorization": [
+      "Depends(operator)"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/requisitions/{key}/action",
+    "function": "requisition_action",
+    "line": 511,
+    "authorization": [
+      "Depends(operator)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/tickets",
+    "function": "tickets",
+    "line": 543,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/tickets",
+    "function": "add_ticket",
+    "line": 556,
+    "authorization": [
+      "Depends(operator)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/tickets/{key}",
+    "function": "ticket_detail",
+    "line": 570,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/tickets/{key}/comments",
+    "function": "add_comment",
+    "line": 579,
+    "authorization": [
+      "Depends(operator)"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/tickets/{key}",
+    "function": "edit_ticket",
+    "line": 590,
+    "authorization": [
+      "Depends(operator)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/maintenance",
+    "function": "maintenance",
+    "line": 607,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/maintenance",
+    "function": "open_maintenance",
+    "line": 613,
+    "authorization": [
+      "Depends(operator)"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/maintenance/{key}/close",
+    "function": "close_maintenance",
+    "line": 626,
+    "authorization": [
+      "Depends(operator)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/alerts",
+    "function": "alerts",
+    "line": 654,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/dashboard",
+    "function": "dashboard",
+    "line": 660,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/forecast",
+    "function": "forecast",
+    "line": 674,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/audit",
+    "function": "history",
+    "line": 686,
+    "authorization": [
+      "Depends(administrator)"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/export/{entity}",
+    "function": "export",
+    "line": 701,
+    "authorization": [
+      "Depends(current_user)"
+    ]
+  }
+]

@@ -1,0 +1,1146 @@
+{
+  "status": "passed",
+  "scope": "synthetic disposable PostgreSQL local only",
+  "postgres": "17.11",
+  "backup_bytes": 321215,
+  "tables_compared": 60,
+  "sequences_compared": 54,
+  "constraints": 210,
+  "indexes": 111,
+  "source": {
+    "compac_bench_100.audit": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.balances": {
+      "count": 50,
+      "sha256": "1f317a11eaa404289351798acab330873ad186bee9f81b6db0f0279fd7c5d685"
+    },
+    "compac_bench_100.categories": {
+      "count": 1,
+      "sha256": "9c4cac556f31f6cc19f8a447b76a04115955e602f6e904a6e8273af260ad193f"
+    },
+    "compac_bench_100.consumption_profiles": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.employees": {
+      "count": 1,
+      "sha256": "4eca777da2657a2f5afde3488227ec55d35af8a044368fedbdfba498b40f9324"
+    },
+    "compac_bench_100.equipment": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.expenses": {
+      "count": 10,
+      "sha256": "b3594034a33971b750aef264af6eb126c322c3b14e0a711e94cf231ee4f66d0b"
+    },
+    "compac_bench_100.loans": {
+      "count": 100,
+      "sha256": "bd5356d70e02e1ec61b2795b1140440aa49eab0a41b7b87044640d70d37d016b"
+    },
+    "compac_bench_100.locations": {
+      "count": 1,
+      "sha256": "ee47bbf02e31251a0b46bef97a9fd9cd12fffbb0a6ccd88885267809ae87b8a9"
+    },
+    "compac_bench_100.maintenance": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.materials": {
+      "count": 50,
+      "sha256": "85c659d3b3a46a45e396cd7dd15773686ed09e66290082b760bbbe1c3b284a2c"
+    },
+    "compac_bench_100.movements": {
+      "count": 100,
+      "sha256": "e99d5056f68effb981ce43cc346827e0ddc7b2093a72e263f45da4cf45b3c55d"
+    },
+    "compac_bench_100.production": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.requisition_items": {
+      "count": 100,
+      "sha256": "0372e85f7a250edede0c8b7af818fa6ceac0b1ea981c87907b150a59a77b573b"
+    },
+    "compac_bench_100.requisitions": {
+      "count": 10,
+      "sha256": "c1903212ba2ff7f9f5c5103cb2d41c42d2d89cf7a75c0845153ae882ebb86058"
+    },
+    "compac_bench_100.sessions": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.ticket_comments": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.tickets": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.users": {
+      "count": 1,
+      "sha256": "5aafa3cb78903fe202f18e67021882941353fb591f41a2aa7d2a55d4ae12a495"
+    },
+    "compac_bench_100.works": {
+      "count": 1,
+      "sha256": "55759a38083a441756dbbe43a841f92127ffee0ac0f3df75cd9aa0785abd78bd"
+    },
+    "compac_bench_1000.audit": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.balances": {
+      "count": 50,
+      "sha256": "1f317a11eaa404289351798acab330873ad186bee9f81b6db0f0279fd7c5d685"
+    },
+    "compac_bench_1000.categories": {
+      "count": 1,
+      "sha256": "9c4cac556f31f6cc19f8a447b76a04115955e602f6e904a6e8273af260ad193f"
+    },
+    "compac_bench_1000.consumption_profiles": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.employees": {
+      "count": 1,
+      "sha256": "4eca777da2657a2f5afde3488227ec55d35af8a044368fedbdfba498b40f9324"
+    },
+    "compac_bench_1000.equipment": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.expenses": {
+      "count": 100,
+      "sha256": "4dc56918389a4f4a09e16570cc99a53ac3e5824d88d0ad91cf8c5a1958c11dd2"
+    },
+    "compac_bench_1000.loans": {
+      "count": 1000,
+      "sha256": "7f11c1a2032ee2fe3816cda4c441177b0eb99d16570418f18cd41894d2112722"
+    },
+    "compac_bench_1000.locations": {
+      "count": 1,
+      "sha256": "ee47bbf02e31251a0b46bef97a9fd9cd12fffbb0a6ccd88885267809ae87b8a9"
+    },
+    "compac_bench_1000.maintenance": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.materials": {
+      "count": 50,
+      "sha256": "85c659d3b3a46a45e396cd7dd15773686ed09e66290082b760bbbe1c3b284a2c"
+    },
+    "compac_bench_1000.movements": {
+      "count": 1000,
+      "sha256": "ec94cc7c2ae2a74149ff9db7af896cce677539deaf4e5d1251a38a2b79a8a3c7"
+    },
+    "compac_bench_1000.production": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.requisition_items": {
+      "count": 1000,
+      "sha256": "fbb59c418ed0ce9c718604d722ab89ef65411b4c02583eac51c7d271d11cf575"
+    },
+    "compac_bench_1000.requisitions": {
+      "count": 100,
+      "sha256": "f8489deb7357e862bbf83bb22bde0215ece797ceb61e24137d7d52258bd2aaa5"
+    },
+    "compac_bench_1000.sessions": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.ticket_comments": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.tickets": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.users": {
+      "count": 1,
+      "sha256": "5aafa3cb78903fe202f18e67021882941353fb591f41a2aa7d2a55d4ae12a495"
+    },
+    "compac_bench_1000.works": {
+      "count": 1,
+      "sha256": "55759a38083a441756dbbe43a841f92127ffee0ac0f3df75cd9aa0785abd78bd"
+    },
+    "compac_bench_10000.audit": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.balances": {
+      "count": 50,
+      "sha256": "1f317a11eaa404289351798acab330873ad186bee9f81b6db0f0279fd7c5d685"
+    },
+    "compac_bench_10000.categories": {
+      "count": 1,
+      "sha256": "9c4cac556f31f6cc19f8a447b76a04115955e602f6e904a6e8273af260ad193f"
+    },
+    "compac_bench_10000.consumption_profiles": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.employees": {
+      "count": 1,
+      "sha256": "4eca777da2657a2f5afde3488227ec55d35af8a044368fedbdfba498b40f9324"
+    },
+    "compac_bench_10000.equipment": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.expenses": {
+      "count": 1000,
+      "sha256": "53658121576fd3416ef0d9c6935d4b69b3b5f3fa82f4cc31fc8f626dc3f7404c"
+    },
+    "compac_bench_10000.loans": {
+      "count": 10000,
+      "sha256": "03065ece2d28e8c634ab24f461877a335ce61c39507b05cecbce5c68a510db8d"
+    },
+    "compac_bench_10000.locations": {
+      "count": 1,
+      "sha256": "ee47bbf02e31251a0b46bef97a9fd9cd12fffbb0a6ccd88885267809ae87b8a9"
+    },
+    "compac_bench_10000.maintenance": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.materials": {
+      "count": 50,
+      "sha256": "85c659d3b3a46a45e396cd7dd15773686ed09e66290082b760bbbe1c3b284a2c"
+    },
+    "compac_bench_10000.movements": {
+      "count": 10000,
+      "sha256": "4663da6ddc1ee99c64d1fa15f01372d2faccc9e085851aac5fe29491b32afec6"
+    },
+    "compac_bench_10000.production": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.requisition_items": {
+      "count": 10000,
+      "sha256": "71e53f23991306e18f1b499546026d8f834e84a9efdf7cf4fea45e3f749ac873"
+    },
+    "compac_bench_10000.requisitions": {
+      "count": 1000,
+      "sha256": "4147b732514e902a2d9d43cec389322b8dc4bfedfb4bc2a57480cb4561dbd24a"
+    },
+    "compac_bench_10000.sessions": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.ticket_comments": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.tickets": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.users": {
+      "count": 1,
+      "sha256": "5aafa3cb78903fe202f18e67021882941353fb591f41a2aa7d2a55d4ae12a495"
+    },
+    "compac_bench_10000.works": {
+      "count": 1,
+      "sha256": "55759a38083a441756dbbe43a841f92127ffee0ac0f3df75cd9aa0785abd78bd"
+    },
+    "compac_bench_100.audit_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.categories_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_100.consumption_profiles_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.employees_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_100.equipment_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.expenses_id_seq": {
+      "sequence": [
+        10,
+        true
+      ]
+    },
+    "compac_bench_100.loans_id_seq": {
+      "sequence": [
+        100,
+        true
+      ]
+    },
+    "compac_bench_100.locations_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_100.maintenance_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.materials_id_seq": {
+      "sequence": [
+        50,
+        true
+      ]
+    },
+    "compac_bench_100.movements_id_seq": {
+      "sequence": [
+        100,
+        true
+      ]
+    },
+    "compac_bench_100.production_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.requisition_items_id_seq": {
+      "sequence": [
+        100,
+        true
+      ]
+    },
+    "compac_bench_100.requisitions_id_seq": {
+      "sequence": [
+        10,
+        true
+      ]
+    },
+    "compac_bench_100.ticket_comments_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.tickets_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.users_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_100.works_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_1000.audit_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.categories_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_1000.consumption_profiles_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.employees_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_1000.equipment_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.expenses_id_seq": {
+      "sequence": [
+        100,
+        true
+      ]
+    },
+    "compac_bench_1000.loans_id_seq": {
+      "sequence": [
+        1000,
+        true
+      ]
+    },
+    "compac_bench_1000.locations_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_1000.maintenance_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.materials_id_seq": {
+      "sequence": [
+        50,
+        true
+      ]
+    },
+    "compac_bench_1000.movements_id_seq": {
+      "sequence": [
+        1000,
+        true
+      ]
+    },
+    "compac_bench_1000.production_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.requisition_items_id_seq": {
+      "sequence": [
+        1000,
+        true
+      ]
+    },
+    "compac_bench_1000.requisitions_id_seq": {
+      "sequence": [
+        100,
+        true
+      ]
+    },
+    "compac_bench_1000.ticket_comments_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.tickets_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.users_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_1000.works_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_10000.audit_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.categories_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_10000.consumption_profiles_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.employees_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_10000.equipment_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.expenses_id_seq": {
+      "sequence": [
+        1000,
+        true
+      ]
+    },
+    "compac_bench_10000.loans_id_seq": {
+      "sequence": [
+        10000,
+        true
+      ]
+    },
+    "compac_bench_10000.locations_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_10000.maintenance_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.materials_id_seq": {
+      "sequence": [
+        50,
+        true
+      ]
+    },
+    "compac_bench_10000.movements_id_seq": {
+      "sequence": [
+        10000,
+        true
+      ]
+    },
+    "compac_bench_10000.production_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.requisition_items_id_seq": {
+      "sequence": [
+        10000,
+        true
+      ]
+    },
+    "compac_bench_10000.requisitions_id_seq": {
+      "sequence": [
+        1000,
+        true
+      ]
+    },
+    "compac_bench_10000.ticket_comments_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.tickets_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.users_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_10000.works_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "constraint_count": 210,
+    "index_count": 111
+  },
+  "restored": {
+    "compac_bench_100.audit": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.balances": {
+      "count": 50,
+      "sha256": "1f317a11eaa404289351798acab330873ad186bee9f81b6db0f0279fd7c5d685"
+    },
+    "compac_bench_100.categories": {
+      "count": 1,
+      "sha256": "9c4cac556f31f6cc19f8a447b76a04115955e602f6e904a6e8273af260ad193f"
+    },
+    "compac_bench_100.consumption_profiles": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.employees": {
+      "count": 1,
+      "sha256": "4eca777da2657a2f5afde3488227ec55d35af8a044368fedbdfba498b40f9324"
+    },
+    "compac_bench_100.equipment": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.expenses": {
+      "count": 10,
+      "sha256": "b3594034a33971b750aef264af6eb126c322c3b14e0a711e94cf231ee4f66d0b"
+    },
+    "compac_bench_100.loans": {
+      "count": 100,
+      "sha256": "bd5356d70e02e1ec61b2795b1140440aa49eab0a41b7b87044640d70d37d016b"
+    },
+    "compac_bench_100.locations": {
+      "count": 1,
+      "sha256": "ee47bbf02e31251a0b46bef97a9fd9cd12fffbb0a6ccd88885267809ae87b8a9"
+    },
+    "compac_bench_100.maintenance": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.materials": {
+      "count": 50,
+      "sha256": "85c659d3b3a46a45e396cd7dd15773686ed09e66290082b760bbbe1c3b284a2c"
+    },
+    "compac_bench_100.movements": {
+      "count": 100,
+      "sha256": "e99d5056f68effb981ce43cc346827e0ddc7b2093a72e263f45da4cf45b3c55d"
+    },
+    "compac_bench_100.production": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.requisition_items": {
+      "count": 100,
+      "sha256": "0372e85f7a250edede0c8b7af818fa6ceac0b1ea981c87907b150a59a77b573b"
+    },
+    "compac_bench_100.requisitions": {
+      "count": 10,
+      "sha256": "c1903212ba2ff7f9f5c5103cb2d41c42d2d89cf7a75c0845153ae882ebb86058"
+    },
+    "compac_bench_100.sessions": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.ticket_comments": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.tickets": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_100.users": {
+      "count": 1,
+      "sha256": "5aafa3cb78903fe202f18e67021882941353fb591f41a2aa7d2a55d4ae12a495"
+    },
+    "compac_bench_100.works": {
+      "count": 1,
+      "sha256": "55759a38083a441756dbbe43a841f92127ffee0ac0f3df75cd9aa0785abd78bd"
+    },
+    "compac_bench_1000.audit": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.balances": {
+      "count": 50,
+      "sha256": "1f317a11eaa404289351798acab330873ad186bee9f81b6db0f0279fd7c5d685"
+    },
+    "compac_bench_1000.categories": {
+      "count": 1,
+      "sha256": "9c4cac556f31f6cc19f8a447b76a04115955e602f6e904a6e8273af260ad193f"
+    },
+    "compac_bench_1000.consumption_profiles": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.employees": {
+      "count": 1,
+      "sha256": "4eca777da2657a2f5afde3488227ec55d35af8a044368fedbdfba498b40f9324"
+    },
+    "compac_bench_1000.equipment": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.expenses": {
+      "count": 100,
+      "sha256": "4dc56918389a4f4a09e16570cc99a53ac3e5824d88d0ad91cf8c5a1958c11dd2"
+    },
+    "compac_bench_1000.loans": {
+      "count": 1000,
+      "sha256": "7f11c1a2032ee2fe3816cda4c441177b0eb99d16570418f18cd41894d2112722"
+    },
+    "compac_bench_1000.locations": {
+      "count": 1,
+      "sha256": "ee47bbf02e31251a0b46bef97a9fd9cd12fffbb0a6ccd88885267809ae87b8a9"
+    },
+    "compac_bench_1000.maintenance": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.materials": {
+      "count": 50,
+      "sha256": "85c659d3b3a46a45e396cd7dd15773686ed09e66290082b760bbbe1c3b284a2c"
+    },
+    "compac_bench_1000.movements": {
+      "count": 1000,
+      "sha256": "ec94cc7c2ae2a74149ff9db7af896cce677539deaf4e5d1251a38a2b79a8a3c7"
+    },
+    "compac_bench_1000.production": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.requisition_items": {
+      "count": 1000,
+      "sha256": "fbb59c418ed0ce9c718604d722ab89ef65411b4c02583eac51c7d271d11cf575"
+    },
+    "compac_bench_1000.requisitions": {
+      "count": 100,
+      "sha256": "f8489deb7357e862bbf83bb22bde0215ece797ceb61e24137d7d52258bd2aaa5"
+    },
+    "compac_bench_1000.sessions": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.ticket_comments": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.tickets": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_1000.users": {
+      "count": 1,
+      "sha256": "5aafa3cb78903fe202f18e67021882941353fb591f41a2aa7d2a55d4ae12a495"
+    },
+    "compac_bench_1000.works": {
+      "count": 1,
+      "sha256": "55759a38083a441756dbbe43a841f92127ffee0ac0f3df75cd9aa0785abd78bd"
+    },
+    "compac_bench_10000.audit": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.balances": {
+      "count": 50,
+      "sha256": "1f317a11eaa404289351798acab330873ad186bee9f81b6db0f0279fd7c5d685"
+    },
+    "compac_bench_10000.categories": {
+      "count": 1,
+      "sha256": "9c4cac556f31f6cc19f8a447b76a04115955e602f6e904a6e8273af260ad193f"
+    },
+    "compac_bench_10000.consumption_profiles": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.employees": {
+      "count": 1,
+      "sha256": "4eca777da2657a2f5afde3488227ec55d35af8a044368fedbdfba498b40f9324"
+    },
+    "compac_bench_10000.equipment": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.expenses": {
+      "count": 1000,
+      "sha256": "53658121576fd3416ef0d9c6935d4b69b3b5f3fa82f4cc31fc8f626dc3f7404c"
+    },
+    "compac_bench_10000.loans": {
+      "count": 10000,
+      "sha256": "03065ece2d28e8c634ab24f461877a335ce61c39507b05cecbce5c68a510db8d"
+    },
+    "compac_bench_10000.locations": {
+      "count": 1,
+      "sha256": "ee47bbf02e31251a0b46bef97a9fd9cd12fffbb0a6ccd88885267809ae87b8a9"
+    },
+    "compac_bench_10000.maintenance": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.materials": {
+      "count": 50,
+      "sha256": "85c659d3b3a46a45e396cd7dd15773686ed09e66290082b760bbbe1c3b284a2c"
+    },
+    "compac_bench_10000.movements": {
+      "count": 10000,
+      "sha256": "4663da6ddc1ee99c64d1fa15f01372d2faccc9e085851aac5fe29491b32afec6"
+    },
+    "compac_bench_10000.production": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.requisition_items": {
+      "count": 10000,
+      "sha256": "71e53f23991306e18f1b499546026d8f834e84a9efdf7cf4fea45e3f749ac873"
+    },
+    "compac_bench_10000.requisitions": {
+      "count": 1000,
+      "sha256": "4147b732514e902a2d9d43cec389322b8dc4bfedfb4bc2a57480cb4561dbd24a"
+    },
+    "compac_bench_10000.sessions": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.ticket_comments": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.tickets": {
+      "count": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compac_bench_10000.users": {
+      "count": 1,
+      "sha256": "5aafa3cb78903fe202f18e67021882941353fb591f41a2aa7d2a55d4ae12a495"
+    },
+    "compac_bench_10000.works": {
+      "count": 1,
+      "sha256": "55759a38083a441756dbbe43a841f92127ffee0ac0f3df75cd9aa0785abd78bd"
+    },
+    "compac_bench_100.audit_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.categories_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_100.consumption_profiles_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.employees_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_100.equipment_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.expenses_id_seq": {
+      "sequence": [
+        10,
+        true
+      ]
+    },
+    "compac_bench_100.loans_id_seq": {
+      "sequence": [
+        100,
+        true
+      ]
+    },
+    "compac_bench_100.locations_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_100.maintenance_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.materials_id_seq": {
+      "sequence": [
+        50,
+        true
+      ]
+    },
+    "compac_bench_100.movements_id_seq": {
+      "sequence": [
+        100,
+        true
+      ]
+    },
+    "compac_bench_100.production_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.requisition_items_id_seq": {
+      "sequence": [
+        100,
+        true
+      ]
+    },
+    "compac_bench_100.requisitions_id_seq": {
+      "sequence": [
+        10,
+        true
+      ]
+    },
+    "compac_bench_100.ticket_comments_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.tickets_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_100.users_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_100.works_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_1000.audit_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.categories_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_1000.consumption_profiles_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.employees_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_1000.equipment_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.expenses_id_seq": {
+      "sequence": [
+        100,
+        true
+      ]
+    },
+    "compac_bench_1000.loans_id_seq": {
+      "sequence": [
+        1000,
+        true
+      ]
+    },
+    "compac_bench_1000.locations_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_1000.maintenance_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.materials_id_seq": {
+      "sequence": [
+        50,
+        true
+      ]
+    },
+    "compac_bench_1000.movements_id_seq": {
+      "sequence": [
+        1000,
+        true
+      ]
+    },
+    "compac_bench_1000.production_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.requisition_items_id_seq": {
+      "sequence": [
+        1000,
+        true
+      ]
+    },
+    "compac_bench_1000.requisitions_id_seq": {
+      "sequence": [
+        100,
+        true
+      ]
+    },
+    "compac_bench_1000.ticket_comments_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.tickets_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_1000.users_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_1000.works_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_10000.audit_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.categories_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_10000.consumption_profiles_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.employees_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_10000.equipment_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.expenses_id_seq": {
+      "sequence": [
+        1000,
+        true
+      ]
+    },
+    "compac_bench_10000.loans_id_seq": {
+      "sequence": [
+        10000,
+        true
+      ]
+    },
+    "compac_bench_10000.locations_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_10000.maintenance_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.materials_id_seq": {
+      "sequence": [
+        50,
+        true
+      ]
+    },
+    "compac_bench_10000.movements_id_seq": {
+      "sequence": [
+        10000,
+        true
+      ]
+    },
+    "compac_bench_10000.production_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.requisition_items_id_seq": {
+      "sequence": [
+        10000,
+        true
+      ]
+    },
+    "compac_bench_10000.requisitions_id_seq": {
+      "sequence": [
+        1000,
+        true
+      ]
+    },
+    "compac_bench_10000.ticket_comments_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.tickets_id_seq": {
+      "sequence": [
+        1,
+        false
+      ]
+    },
+    "compac_bench_10000.users_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "compac_bench_10000.works_id_seq": {
+      "sequence": [
+        1,
+        true
+      ]
+    },
+    "constraint_count": 210,
+    "index_count": 111
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "zero_on_catalog_create": [
+    {
+      "material_id": 1,
+      "code": "AUDIT-1",
+      "material": "Ferramenta fictícia",
+      "unit": "UN",
+      "minimum_stock": 0.0,
+      "location_id": null,
+      "location": null,
+      "work_id": null,
+      "quantity": 0.0
+    }
+  ],
+  "initial_quantity_field": 422,
+  "duplicate_code_case_insensitive": 409,
+  "repeated_movement": {
+    "statuses": [
+      201,
+      201
+    ],
+    "movement_ids": [
+      1,
+      2
+    ],
+    "available": 4.0
+  },
+  "negative_movement_status": 422,
+  "zero_entry_status": 422,
+  "catalog_balance_field_status": 422,
+  "edit_material_unit": {
+    "status": 200,
+    "stock": [
+      {
+        "material_id": 1,
+        "code": "AUDIT-1",
+        "material": "Ferramenta fictícia",
+        "unit": "KG",
+        "minimum_stock": 0.0,
+        "location_id": 1,
+        "location": "Local fictício",
+        "work_id": 1,
+        "quantity": 4.0
+      }
+    ],
+    "historical_movement_units": [
+      "KG",
+      "KG"
+    ]
+  },
+  "expense_does_not_receive_stock": {
+    "before": 4.0,
+    "after": 4.0,
+    "movements": 2
+  },
+  "loan_return": {
+    "available": 3.25,
+    "outstanding": 0.75
+  },
+  "rollback_injected_audit_failure": {
+    "status": 500,
+    "state_unchanged": true
+  }
+}

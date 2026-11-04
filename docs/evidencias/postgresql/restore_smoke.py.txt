@@ -1,0 +1,35 @@
+"""Restore smoke test, restricted to the disposable local audit PostgreSQL."""
+import hashlib,json,pathlib,subprocess
+import psycopg
+from psycopg import sql
+BIN=pathlib.Path('/tmp/compac-pg/root/usr/lib/postgresql/17/bin')
+BASE='postgresql://compac_audit@127.0.0.1:55439/'
+SOURCE=BASE+'compac_audit'
+RESTORED=BASE+'compac_restored'
+OUT=pathlib.Path('/tmp/compac-pg/evidence')
+OUT.mkdir(exist_ok=True)
+dump=OUT/'synthetic-backup.dump'
+subprocess.run([str(BIN/'pg_dump'),'--format=custom','--no-owner','--file',str(dump),SOURCE],check=True)
+with psycopg.connect(BASE+'postgres',autocommit=True) as conn:
+ conn.execute('DROP DATABASE IF EXISTS compac_restored')
+ conn.execute('CREATE DATABASE compac_restored')
+subprocess.run([str(BIN/'pg_restore'),'--no-owner','--exit-on-error','--dbname',RESTORED,str(dump)],check=True)
+def snapshot(dsn):
+ result={}
+ with psycopg.connect(dsn) as conn:
+  tables=conn.execute("SELECT schemaname,tablename FROM pg_tables WHERE schemaname LIKE 'compac_bench_%' ORDER BY 1,2").fetchall()
+  for schema,table in tables:
+   rows=conn.execute(sql.SQL('SELECT to_jsonb(t) FROM {}.{} t').format(sql.Identifier(schema),sql.Identifier(table))).fetchall()
+   packed=sorted(json.dumps(row[0],sort_keys=True,ensure_ascii=False,default=str) for row in rows)
+   result[schema+'.'+table]={'count':len(rows),'sha256':hashlib.sha256('\n'.join(packed).encode()).hexdigest()}
+  sequences=conn.execute("SELECT n.nspname,c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind='S' AND n.nspname LIKE 'compac_bench_%' ORDER BY 1,2").fetchall()
+  for schema,sequence in sequences:
+   result[schema+'.'+sequence]={'sequence':list(conn.execute(sql.SQL('SELECT last_value,is_called FROM {}.{}').format(sql.Identifier(schema),sql.Identifier(sequence))).fetchone())}
+  result['constraint_count']=conn.execute("SELECT count(*) FROM pg_constraint c JOIN pg_namespace n ON n.oid=c.connamespace WHERE n.nspname LIKE 'compac_bench_%'").fetchone()[0]
+  result['index_count']=conn.execute("SELECT count(*) FROM pg_indexes WHERE schemaname LIKE 'compac_bench_%'").fetchone()[0]
+ return result
+source=snapshot(SOURCE);restored=snapshot(RESTORED)
+assert source==restored,'Restored contents/sequences/constraints differ'
+result={'status':'passed','scope':'synthetic disposable PostgreSQL local only','postgres':'17.11','backup_bytes':dump.stat().st_size,'tables_compared':sum(isinstance(v,dict) and 'count' in v for v in source.values()),'sequences_compared':sum(isinstance(v,dict) and 'sequence' in v for v in source.values()),'constraints':source['constraint_count'],'indexes':source['index_count'],'source':source,'restored':restored}
+(OUT/'restore-result.json').write_text(json.dumps(result,indent=2,ensure_ascii=False))
+print(json.dumps({k:v for k,v in result.items() if k not in ('source','restored')}))
