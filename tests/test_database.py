@@ -1,3 +1,5 @@
+import ssl
+
 import pytest
 
 from app.db import postgres_options
@@ -8,7 +10,8 @@ def test_remote_postgres_always_verifies_tls():
         'postgresql://example:example@db.example.invalid/compac?sslmode=disable&channel_binding=require'
     )
     assert settings['sslmode'] == 'verify-full'
-    assert settings['sslrootcert'] == 'system'
+    trust = ssl.create_default_context(cafile=settings['sslrootcert'])
+    assert trust.get_ca_certs(), 'External PostgreSQL needs a usable CA bundle'
     assert settings['channel_binding'] == 'require'
 
 

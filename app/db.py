@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from decimal import Decimal
 from pathlib import Path
 
+import certifi
 import psycopg
 from psycopg.conninfo import conninfo_to_dict
 from psycopg.rows import dict_row
@@ -120,10 +121,10 @@ def postgres_options(url):
     options = conninfo_to_dict(url)
     host = options.get('host', '')
     if host not in ('localhost', '127.0.0.1', '::1'):
-        # libpq verifies both the certificate chain and the hostname. The system
-        # root store is supported by the libpq bundled with psycopg-binary.
+        # Verify the chain and hostname using an explicit CA bundle: the OpenSSL
+        # bundled with psycopg-binary may not find Render's system certificates.
         options['sslmode'] = 'verify-full'
-        options.setdefault('sslrootcert', 'system')
+        options.setdefault('sslrootcert', certifi.where())
     options.setdefault('connect_timeout', '10')
     return options
 
