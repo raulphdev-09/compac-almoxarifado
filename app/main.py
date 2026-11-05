@@ -771,3 +771,7 @@ def export(entity: str, user=Depends(current_user)):
     else:
         writer.writerow(['Sem registros'])
     return Response('\ufeff' + stream.getvalue(), media_type='text/csv; charset=utf-8', headers={'Content-Disposition': f'attachment; filename="compac-{entity}.csv"'})
+
+
+from .attendance.routes import register_attendance
+register_attendance(app, administrator)
