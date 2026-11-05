@@ -22,7 +22,7 @@ def legacy_snapshot():
 def remove_test_migration():
     # Only called after client_factory created a disposable database/schema.
     with connect(write=True) as db:
-        for name in ('idempotency_requests', 'auth_attempts', 'schema_migrations'):
+        for name in ('attendance_records', 'attendance_authorizations', 'attendance_terminals', 'idempotency_requests', 'auth_attempts', 'schema_migrations'):
             db.execute(f'DROP TABLE {name}')
 
 
@@ -35,7 +35,7 @@ def test_legacy_data_preserved_and_migration_repeatable(admin, catalog):
     assert legacy_snapshot() == before
     with connect() as db:
         assert status(db) == {'revision': REVISION, 'applied': True, 'checksum_valid': True}
-        assert db.execute('SELECT COUNT(*) FROM schema_migrations').fetchone()[0] == 1
+        assert db.execute('SELECT COUNT(*) FROM schema_migrations').fetchone()[0] == 2
 
 
 def test_production_start_requires_explicit_migration(client_factory, monkeypatch):
@@ -53,7 +53,7 @@ def test_production_start_requires_explicit_migration(client_factory, monkeypatc
 
 def test_migration_failure_rolls_back_all_ddl(client_factory):
     remove_test_migration()
-    with patch('app.migrations.statements', side_effect=lambda db: statements(db) + ['INVALID SQL FOR AUDIT TEST']):
+    with patch('app.migrations.statements', side_effect=lambda db, source=None: statements(db, source) + ['INVALID SQL FOR AUDIT TEST']):
         with pytest.raises(Exception):
             init_db(allow_migrations=True)
     with connect() as db:
