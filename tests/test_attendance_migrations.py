@@ -9,12 +9,13 @@ import pytest
 
 from app.db import SCHEMA, connect, init_db
 from app.migrations import (
-    BASE_CHECKSUM, BASE_REVISION, BASE_SQL, CHECKSUM, REVISION,
+    BASE_CHECKSUM, BASE_REVISION, BASE_SQL, CHECKSUM, REVISION, CHECKSUMS, ATTENDANCE_SQL,
     migrate, statements, status, table_exists,
 )
 
 
-NEW_TABLES = ('attendance_records', 'attendance_authorizations', 'attendance_terminals')
+NEW_TABLES = ('attendance_device_authorizations', 'attendance_device_sessions', 'attendance_activation_codes',
+              'attendance_records', 'attendance_authorizations', 'attendance_terminals')
 LEGACY_TABLES = tuple(
     statement.split('(')[0].split()[-1]
     for statement in SCHEMA.split(';') if statement.strip().startswith('CREATE TABLE')
@@ -34,7 +35,7 @@ def to_security_revision():
     with connect(write=True) as db:
         for name in NEW_TABLES:
             db.execute(f'DROP TABLE {name}')
-        db.execute('DELETE FROM schema_migrations WHERE version=?', (REVISION,))
+        db.execute('DELETE FROM schema_migrations WHERE version<>?', (BASE_REVISION,))
 
 
 def seed_security_rows():
@@ -68,7 +69,7 @@ def test_upgrade_from_security_preserves_all_legacy_rows(admin, catalog):
     assert snapshot() == before
     with connect() as db:
         versions = {r['version']: r['checksum'] for r in db.execute('SELECT version,checksum FROM schema_migrations')}
-        assert versions == {BASE_REVISION: BASE_CHECKSUM, REVISION: CHECKSUM}
+        assert versions == CHECKSUMS
         assert all(table_exists(db, name) for name in NEW_TABLES)
         assert not table_exists(db, 'attendance_employees')
 
@@ -149,11 +150,11 @@ def test_latest_revision_requires_attendance_indexes(client_factory, index):
 @pytest.mark.parametrize('field', ('record_uid', 'authorization_hash'))
 def test_latest_revision_requires_replay_uniqueness(client_factory, field):
     with connect(write=True) as db:
-        definition = next(item for item in statements(db) if item.startswith('CREATE TABLE IF NOT EXISTS attendance_records'))
+        definition = next(item for item in statements(db, ATTENDANCE_SQL) if item.startswith('CREATE TABLE IF NOT EXISTS attendance_records'))
         definition = definition.replace(f'{field} TEXT NOT NULL UNIQUE', f'{field} TEXT NOT NULL')
         db.execute('DROP TABLE attendance_records')
         db.execute(definition)
-        for statement in statements(db):
+        for statement in statements(db, ATTENDANCE_SQL):
             if statement.startswith('CREATE INDEX') and ' ON attendance_records(' in statement:
                 db.execute(statement)
     with pytest.raises(RuntimeError, match='unicidade'):

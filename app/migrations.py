@@ -26,8 +26,8 @@ CREATE INDEX IF NOT EXISTS auth_attempts_origin_time ON auth_attempts(origin_has
 CREATE INDEX IF NOT EXISTS auth_attempts_time ON auth_attempts(attempted_at);
 '''
 BASE_CHECKSUM = hashlib.sha256(BASE_SQL.encode()).hexdigest()
-REVISION = '002_attendance_experimental'
-SQL = '''
+ATTENDANCE_REVISION = '002_attendance_experimental'
+ATTENDANCE_SQL = '''
 CREATE TABLE IF NOT EXISTS attendance_terminals(
  id INTEGER PRIMARY KEY,
  name TEXT NOT NULL,
@@ -64,8 +64,35 @@ CREATE INDEX IF NOT EXISTS attendance_records_employee_time ON attendance_record
 CREATE INDEX IF NOT EXISTS attendance_records_work_time ON attendance_records(work_id,marked_at,id);
 CREATE INDEX IF NOT EXISTS attendance_authorizations_expiry ON attendance_authorizations(expires_at);
 '''
+ATTENDANCE_CHECKSUM = hashlib.sha256(ATTENDANCE_SQL.encode()).hexdigest()
+REVISION = '003_attendance_devices'
+SQL = '''
+CREATE TABLE IF NOT EXISTS attendance_activation_codes(
+ token_hash TEXT NOT NULL PRIMARY KEY,
+ terminal_id INTEGER NOT NULL REFERENCES attendance_terminals(id),
+ created_by INTEGER NOT NULL REFERENCES users(id),
+ created_at TEXT NOT NULL,
+ expires_at TEXT NOT NULL,
+ used_at TEXT
+);
+CREATE TABLE IF NOT EXISTS attendance_device_sessions(
+ token_hash TEXT NOT NULL PRIMARY KEY,
+ terminal_id INTEGER NOT NULL REFERENCES attendance_terminals(id),
+ created_by INTEGER NOT NULL REFERENCES users(id),
+ created_at TEXT NOT NULL,
+ expires_at TEXT NOT NULL,
+ revoked_at TEXT
+);
+CREATE TABLE IF NOT EXISTS attendance_device_authorizations(
+ token_hash TEXT NOT NULL PRIMARY KEY REFERENCES attendance_authorizations(token_hash),
+ device_session_hash TEXT NOT NULL REFERENCES attendance_device_sessions(token_hash)
+);
+CREATE INDEX IF NOT EXISTS attendance_activation_terminal_expiry ON attendance_activation_codes(terminal_id,expires_at);
+CREATE INDEX IF NOT EXISTS attendance_device_terminal_expiry ON attendance_device_sessions(terminal_id,expires_at);
+CREATE INDEX IF NOT EXISTS attendance_device_authorization_session ON attendance_device_authorizations(device_session_hash);
+'''
 CHECKSUM = hashlib.sha256(SQL.encode()).hexdigest()
-MIGRATIONS = ((BASE_REVISION, BASE_SQL), (REVISION, SQL))
+MIGRATIONS = ((BASE_REVISION, BASE_SQL), (ATTENDANCE_REVISION, ATTENDANCE_SQL), (REVISION, SQL))
 CHECKSUMS = {version: hashlib.sha256(source.encode()).hexdigest() for version, source in MIGRATIONS}
 BASE_EXPECTED = {
     'idempotency_requests': (('user_id', 'scope', 'idempotency_key', 'request_hash', 'response_json', 'created_at'), ('user_id', 'scope', 'idempotency_key')),
@@ -76,9 +103,15 @@ ATTENDANCE_EXPECTED = {
     'attendance_authorizations': (('token_hash', 'employee_id', 'terminal_id', 'created_by', 'created_at', 'expires_at', 'used_at'), ('token_hash',)),
     'attendance_records': (('id', 'record_uid', 'employee_id', 'work_id', 'terminal_id', 'mark_type', 'marked_at', 'verification_method', 'verification_result', 'is_test', 'created_by', 'authorization_hash'), ('id',)),
 }
-EXPECTED = {**BASE_EXPECTED, **ATTENDANCE_EXPECTED}
+DEVICE_EXPECTED = {
+    'attendance_activation_codes': (('token_hash', 'terminal_id', 'created_by', 'created_at', 'expires_at', 'used_at'), ('token_hash',)),
+    'attendance_device_sessions': (('token_hash', 'terminal_id', 'created_by', 'created_at', 'expires_at', 'revoked_at'), ('token_hash',)),
+    'attendance_device_authorizations': (('token_hash', 'device_session_hash'), ('token_hash',)),
+}
+EXPECTED = {**BASE_EXPECTED, **ATTENDANCE_EXPECTED, **DEVICE_EXPECTED}
 BASE_INDEXES = {'auth_attempts_account_time', 'auth_attempts_origin_time', 'auth_attempts_time'}
 ATTENDANCE_INDEXES = {'attendance_records_employee_time', 'attendance_records_work_time', 'attendance_authorizations_expiry'}
+DEVICE_INDEXES = {'attendance_activation_terminal_expiry', 'attendance_device_terminal_expiry', 'attendance_device_authorization_session'}
 
 
 def table_exists(db, name):
@@ -164,6 +197,11 @@ def validate_structure(db, *, through=REVISION):
         raise RuntimeError('Schema incompleto: índices de ponto ausentes.')
     if not {('record_uid',), ('authorization_hash',)} <= _unique_columns(db, 'attendance_records'):
         raise RuntimeError('Schema incompleto: unicidade dos registros de ponto ausente.')
+    if through == ATTENDANCE_REVISION:
+        return
+    _validate_tables(db, DEVICE_EXPECTED)
+    if not DEVICE_INDEXES <= _indexes(db, DEVICE_EXPECTED):
+        raise RuntimeError('Schema incompleto: índices de dispositivo ausentes.')
 
 
 def migrate(db, *, allow_apply):
