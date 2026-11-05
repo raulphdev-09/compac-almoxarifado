@@ -8,6 +8,10 @@ A revisão `001_security_integrity` adiciona proteção de reenvio de movimenta�
 
 Clientes de `POST /api/movements` precisam enviar `Idempotency-Key` por operação e reutilizá-la em retry do mesmo conteúdo; a interface desta versão já faz isso. A nova versão ainda não foi publicada em produção. Os testes de navegador da fase estão em `tests/browser_security_smoke.cjs` e usam somente dados descartáveis.
 
+## Ponto experimental — Fase 1
+
+A estrutura de marcações supervisionadas de teste está documentada em [PONTO_FASE_1.md](docs/PONTO_FASE_1.md). Demonstração descartável: `.venv/bin/python scripts/demo_attendance.py`. Não usa câmera, fotografias ou reconhecimento facial real e permanece bloqueada em produção. A revisão aditiva `002_attendance_experimental` exige o procedimento de migração autorizado para bancos remotos; esta branch não foi publicada.
+
 ## Publicar gratuitamente: Render Free + Neon Free
 
 Esta configuração usa **Render Free para o site** e **Neon Free para guardar os dados em PostgreSQL**. O `render.yaml` não cria serviço pago, disco persistente nem banco pago na Render. Mantenha as duas contas no plano **Free** e respeite os limites desses serviços.
