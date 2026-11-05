@@ -157,6 +157,10 @@ async def security(request: Request, call_next):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['Referrer-Policy'] = 'same-origin'
     response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    if request.url.path.startswith('/ponto-facial'):
+        response.headers['Cache-Control'] = 'no-store'
+        response.headers['Permissions-Policy'] = 'camera=(self), microphone=(), geolocation=()'
+        response.headers['Content-Security-Policy'] += "; media-src 'self' blob:"
     if request.url.path.startswith('/api/'):
         response.headers['Cache-Control'] = 'no-store'
     return response
@@ -775,3 +779,16 @@ def export(entity: str, user=Depends(current_user)):
 
 from .attendance.routes import register_attendance
 register_attendance(app, administrator)
+
+from .attendance.device import register_device_routes
+register_device_routes(app, administrator)
+
+
+@app.get('/ponto-facial', include_in_schema=False)
+def attendance_terminal_page():
+    return FileResponse(STATIC / 'attendance-terminal.html', headers={'Cache-Control': 'no-store'})
+
+
+@app.get('/ponto-facial/configuracao', include_in_schema=False)
+def attendance_terminal_configuration(user=Depends(administrator)):
+    return FileResponse(STATIC / 'attendance-admin.html', headers={'Cache-Control': 'no-store'})

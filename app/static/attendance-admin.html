@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow"><title>COMPAC · Terminais de teste</title>
+  <link rel="stylesheet" href="/static/attendance-admin.css">
+  <script src="/static/attendance-admin.js" defer></script>
+</head>
+<body>
+  <header><a href="/" class="brand">COMPAC <span>GESTÃO DE ALMOXARIFADO</span></a><a href="/">Voltar ao sistema</a></header>
+  <main>
+    <p class="eyebrow">GESTÃO DE PESSOAL · AMBIENTE DE TESTES</p>
+    <h1>Terminais de ponto experimental</h1>
+    <p class="intro">Cadastre o dispositivo na obra correta e gere um código para ativá-lo. Nesta fase, as marcações são simuladas e exigem supervisão.</p>
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+    <section class="card" aria-labelledby="new-title">
+      <h2 id="new-title">Cadastrar terminal de teste</h2>
+      <form id="terminal-form">
+        <div class="fields"><label>Nome do dispositivo<input id="terminal-name" name="name" maxlength="120" required autocomplete="off" placeholder="Ex.: Tablet da entrada"></label>
+        <label>Obra existente<select id="terminal-work" name="work_id" required><option value="">Carregando obras…</option></select></label></div>
+        <button id="create-button" type="submit">Cadastrar terminal</button>
+      </form>
+      <p class="hint">FICC, PRAÇA e TRANSBORDO aparecerão se já estiverem cadastradas e ativas. Esta tela não cria obras automaticamente.</p>
+    </section>
+    <section id="activation-panel" class="card activation" aria-labelledby="activation-title" hidden>
+      <h2 id="activation-title">Código de ativação de uso único</h2>
+      <p id="activation-description"></p>
+      <label>Código temporário<input id="activation-code" type="password" readonly autocomplete="off" spellcheck="false"></label>
+      <div class="actions"><button id="copy-code" type="button">Copiar código</button><button id="reveal-code" type="button" class="secondary">Mostrar código</button><button id="clear-code" type="button" class="secondary">Ocultar e limpar</button></div>
+      <p>Abra <a href="/ponto-facial" target="_blank" rel="noopener noreferrer">/ponto-facial</a> no dispositivo e informe o código. Ao ativar, a sessão administrativa daquele navegador será encerrada. Use um navegador ou perfil separado para administrar.</p>
+    </section>
+    <section class="card" aria-labelledby="list-title">
+      <div class="list-heading"><h2 id="list-title">Dispositivos cadastrados</h2><button id="refresh" class="secondary" type="button">Atualizar</button></div>
+      <p class="hint">Gerar um novo código invalida códigos e acessos anteriores desse terminal. Revogar impede novas marcações.</p>
+      <div class="table-scroll"><table><thead><tr><th scope="col">Dispositivo</th><th scope="col">Obra</th><th scope="col">Situação</th><th scope="col">Ações</th></tr></thead><tbody id="terminals"><tr><td colspan="4">Carregando…</td></tr></tbody></table></div>
+      <div class="pagination"><button id="previous" type="button" class="secondary" disabled>Anterior</button><span id="page-info"></span><button id="next" type="button" class="secondary" disabled>Próxima</button></div>
+    </section>
+    <p class="footer-note">Protótipo experimental. Não substitui o ponto oficial. Nenhuma comparação facial é realizada nesta fase.</p>
+  </main>
+</body>
+</html>

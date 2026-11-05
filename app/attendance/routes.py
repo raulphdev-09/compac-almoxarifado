@@ -52,8 +52,8 @@ def register_attendance(app, administrator):
             enabled = True
         except HTTPException:
             enabled = False
-        return {'enabled': enabled, 'phase': 1, 'experimental': True, 'facial_recognition': False,
-                'terminal_authentication': False, 'mode': 'demo' if enabled else 'disabled'}
+        return {'enabled': enabled, 'phase': 2, 'experimental': True, 'facial_recognition': False,
+                'terminal_authentication': True, 'mode': 'demo' if enabled else 'disabled'}
 
     @app.post(prefix + '/terminals', status_code=201)
     def create_terminal(data: TerminalInput, request: Request, user=Depends(supervised)):

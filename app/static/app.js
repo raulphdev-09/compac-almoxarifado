@@ -607,6 +607,8 @@
           `<div class="nav-group-label">${g.group}</div>${g.items.map(([id, label, ico]) => `<a href="#${id}" class="nav-link${route === id ? " active" : ""}"${route === id ? ' aria-current="page"' : ""}><span class="nav-icon">${icon(ico)}</span><span>${label}</span></a>`).join("")}`,
       )
       .join("");
+    if (isAdmin()) $("#main-nav").insertAdjacentHTML("beforeend",
+      `<div class="nav-group-label">GESTÃO DE PESSOAL</div><a href="/ponto-facial/configuracao" class="nav-link"><span class="nav-icon">${icon("users")}</span><span>Terminais de ponto · teste</span></a>`);
     $("#mobile-nav").innerHTML =
       [
         ["dashboard", "Início", "grid"],
