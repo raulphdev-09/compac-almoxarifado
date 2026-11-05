@@ -12,6 +12,10 @@ Clientes de `POST /api/movements` precisam enviar `Idempotency-Key` por operaç�
 
 A estrutura de marcações supervisionadas de teste está documentada em [PONTO_FASE_1.md](docs/PONTO_FASE_1.md). Demonstração descartável: `.venv/bin/python scripts/demo_attendance.py`. Não usa câmera, fotografias ou reconhecimento facial real e permanece bloqueada em produção. A revisão aditiva `002_attendance_experimental` exige o procedimento de migração autorizado para bancos remotos; esta branch não foi publicada.
 
+## Terminal experimental — Fase 2
+
+Tela `/ponto-facial` com pré-visualização local da câmera, ativação individual do dispositivo e marcações **simuladas**. Configuração para ADMIN em Gestão de Pessoal → Terminais de ponto · teste. Consulte [execução, migração e limites](docs/PONTO_FASE_2.md) e [validação](docs/evidencias/ponto-fase2-validacao.md). A revisão aditiva `003_attendance_devices` preserva as anteriores; o módulo continua bloqueado em produção. Reconhecimento facial real pertence à Fase 3.
+
 ## Publicar gratuitamente: Render Free + Neon Free
 
 Esta configuração usa **Render Free para o site** e **Neon Free para guardar os dados em PostgreSQL**. O `render.yaml` não cria serviço pago, disco persistente nem banco pago na Render. Mantenha as duas contas no plano **Free** e respeite os limites desses serviços.
