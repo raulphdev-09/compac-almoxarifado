@@ -34,9 +34,9 @@ def test_non_admin_cannot_load_terminal_configuration(admin, client_factory, rol
     assert session.get('/ponto-facial/configuracao').status_code == 403
 
 
-def test_terminal_assets_do_not_persist_or_upload_camera_frames(client):
+def test_terminal_assets_do_not_persist_images_or_credentials(client):
     js = client.get('/static/attendance-terminal.js')
     assert js.status_code == 200
-    for forbidden in ('localStorage', 'sessionStorage', 'toDataURL', 'toBlob', 'drawImage', 'indexedDB'):
+    for forbidden in ('localStorage', 'sessionStorage', 'toDataURL', 'indexedDB'):
         assert forbidden not in js.text
     assert 'getUserMedia' in js.text

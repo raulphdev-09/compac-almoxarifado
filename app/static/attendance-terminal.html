@@ -7,7 +7,7 @@
 </head>
 <body>
   <header><div class="brand">COMPAC<small>TERMINAL DE PONTO</small></div><div class="clock"><span id="clock-date">Sincronizando…</span><strong id="clock-time">--:--:--</strong></div></header>
-  <div class="demo-banner">DEMONSTRAÇÃO SUPERVISIONADA · SEM RECONHECIMENTO FACIAL</div>
+  <div id="mode-banner" class="demo-banner">DEMONSTRAÇÃO SUPERVISIONADA · SEM RECONHECIMENTO FACIAL</div>
   <main>
     <div id="message" role="status" aria-live="polite" class="message" hidden></div>
     <section id="activation-panel" class="activation card" hidden>
@@ -18,14 +18,16 @@
     </section>
     <section id="terminal-panel" hidden>
       <div class="work-heading"><div><p class="eyebrow">OBRA DESTE TERMINAL</p><h1 id="work-name"></h1><p id="terminal-name" class="muted"></p></div><button id="disconnect" class="secondary" type="button">Desconectar dispositivo</button></div>
+      <p id="mode-warning" class="mode-warning" hidden>Uso somente em testes supervisionados, com referência autorizada. Não há proteção comprovada contra apresentação de fotos ou vídeos. Este terminal não substitui o ponto oficial.</p>
+      <p id="face-status" class="message" role="status" hidden></p>
       <div class="terminal-grid">
-        <section class="camera-card card" aria-labelledby="camera-title"><h2 id="camera-title">Pré-visualização da câmera</h2><div class="video-wrap"><video id="camera" autoplay muted playsinline aria-label="Pré-visualização local da câmera, sem análise facial"></video><span class="camera-guide" aria-hidden="true"></span></div><p id="camera-status" role="status">Câmera desligada.</p><button id="start-camera" class="secondary" type="button">Ativar câmera</button><p class="hint">Nenhuma imagem é enviada ou armazenada. O enquadramento não confirma identidade.</p></section>
-        <section class="mark-card card" aria-labelledby="mark-title"><p class="eyebrow">TESTE DE MARCAÇÃO</p><h2 id="mark-title">Registrar ponto de teste</h2><form id="mark-form"><fieldset id="mark-fields"><label for="registration">Matrícula fictícia</label><input id="registration" name="registration" maxlength="120" required autocomplete="off" spellcheck="false" inputmode="text" placeholder="Informe a matrícula">
+        <section class="camera-card card" aria-labelledby="camera-title"><h2 id="camera-title">Pré-visualização da câmera</h2><div class="video-wrap"><video id="camera" autoplay muted playsinline aria-label="Pré-visualização local da câmera, sem análise facial"></video><span class="camera-guide" aria-hidden="true"></span></div><p id="camera-status" role="status">Câmera desligada.</p><button id="start-camera" class="secondary" type="button">Ativar câmera</button><p id="camera-privacy" class="hint">Nenhuma imagem é enviada ou armazenada. O enquadramento não confirma identidade.</p></section>
+        <section class="mark-card card" aria-labelledby="mark-title"><p class="eyebrow">TESTE DE MARCAÇÃO</p><h2 id="mark-title">Registrar ponto de teste</h2><form id="mark-form"><fieldset id="mark-fields"><label id="registration-label" for="registration">Matrícula fictícia</label><input id="registration" name="registration" maxlength="120" required autocomplete="off" spellcheck="false" inputmode="text" placeholder="Informe a matrícula">
           <label for="mark-type">Tipo de marcação</label><select id="mark-type" name="mark_type"><option value="ENTRADA">Entrada</option><option value="INICIO_INTERVALO">Início do intervalo</option><option value="RETORNO_INTERVALO">Retorno do intervalo</option><option value="SAIDA">Saída</option></select>
-          <label class="check-label"><input id="supervision" type="checkbox" required><span>Supervisor confirma teste com dados fictícios. A identidade não será verificada por reconhecimento facial.</span></label></fieldset>
+          <label class="check-label"><input id="supervision" type="checkbox" required><span id="supervision-text">Supervisor confirma teste com dados fictícios. A identidade não será verificada por reconhecimento facial.</span></label></fieldset>
           <button id="mark-button" type="submit" disabled>Registrar ponto de teste</button></form>
           <button id="review-reset" class="secondary" type="button" hidden>Supervisor: encerrar tentativa após conferência</button>
-          <div id="success" class="success" role="status" hidden><strong>Marcação de teste confirmada</strong><p id="success-detail"></p><small>A tela será preparada para o próximo teste.</small></div>
+          <div id="success" class="success" role="status" hidden><strong id="success-title">Marcação de teste confirmada</strong><p id="success-detail"></p><small>A tela será preparada para o próximo teste.</small></div>
           <p id="connection-status" class="hint" role="status"></p>
         </section>
       </div>

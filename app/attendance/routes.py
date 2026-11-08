@@ -16,7 +16,7 @@ def register_attendance(app, administrator):
     prefix = '/api/v1/attendance'
 
     def supervised(user=Depends(administrator)):
-        service.demo_only()
+        service.experimental_only()
         return user
 
     def transaction_admin(db, request):
@@ -48,12 +48,18 @@ def register_attendance(app, administrator):
     @app.get(prefix + '/status')
     def module_status(user=Depends(administrator)):
         try:
-            service.demo_only()
+            service.experimental_only()
             enabled = True
         except HTTPException:
             enabled = False
-        return {'enabled': enabled, 'phase': 2, 'experimental': True, 'facial_recognition': False,
-                'terminal_authentication': True, 'mode': 'demo' if enabled else 'disabled'}
+        facial = enabled and os.getenv('COMPAC_ATTENDANCE_MODE') == 'facial'
+        ready = False
+        if facial:
+            from .face_engine import face_configuration
+            ready = face_configuration()['ready'] and os.getenv('COMPAC_FACE_SUPERVISED') == '1'
+        return {'enabled': enabled, 'phase': 3, 'experimental': True, 'facial_recognition': facial,
+                'terminal_authentication': True, 'mode': os.getenv('COMPAC_ATTENDANCE_MODE') if enabled else 'disabled',
+                'face_ready': ready, 'supervised_only': True, 'anti_spoofing': False}
 
     @app.post(prefix + '/terminals', status_code=201)
     def create_terminal(data: TerminalInput, request: Request, user=Depends(supervised)):
@@ -85,6 +91,7 @@ def register_attendance(app, administrator):
 
     @app.post(prefix + '/test-authorizations', status_code=201)
     def authorize(data: TestAuthorizationInput, request: Request, user=Depends(supervised)):
+        service.demo_only()
         with connect(write=True) as db:
             transaction_admin(db, request)
             return attempt(db, lambda: service.authorize_test(db, data, user, request.client.host if request.client else 'unknown'),
@@ -92,6 +99,7 @@ def register_attendance(app, administrator):
 
     @app.post(prefix + '/mark', status_code=201)
     def mark(data: MarkInput, request: Request, user=Depends(supervised)):
+        service.demo_only()
         key = validate_key(request.headers.get('Idempotency-Key'))
         with connect(write=True) as db:
             transaction_admin(db, request)
@@ -117,9 +125,10 @@ def register_attendance(app, administrator):
             clauses.append('marked_at<?')
             values.append(datetime.combine(date_to + timedelta(days=1), day_time.min, tzinfo=tz).astimezone(timezone.utc).isoformat())
         where = ' WHERE ' + ' AND '.join(clauses) if clauses else ''
+        source = '(SELECT * FROM attendance_records UNION ALL SELECT * FROM attendance_facial_records) AS attendance_history'
         with connect() as db:
-            total = db.execute('SELECT COUNT(*) FROM attendance_records' + where, tuple(values)).fetchone()[0]
-            items = [service.public_record(r) for r in db.execute('SELECT * FROM attendance_records' + where + ' ORDER BY marked_at DESC,id DESC LIMIT ? OFFSET ?', (*values, limit, offset))]
+            total = db.execute('SELECT COUNT(*) FROM ' + source + where, tuple(values)).fetchone()[0]
+            items = [service.public_record(r) for r in db.execute('SELECT * FROM ' + source + where + ' ORDER BY marked_at DESC,record_uid DESC LIMIT ? OFFSET ?', (*values, limit, offset))]
         return {'items': items, 'total': total, 'limit': limit, 'offset': offset, 'has_more': offset + len(items) < total, 'experimental': True}
 
     @app.get(prefix + '/records')

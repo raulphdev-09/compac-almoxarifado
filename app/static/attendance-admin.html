@@ -11,7 +11,7 @@
   <main>
     <p class="eyebrow">GESTÃO DE PESSOAL · AMBIENTE DE TESTES</p>
     <h1>Terminais de ponto experimental</h1>
-    <p class="intro">Cadastre o dispositivo na obra correta e gere um código para ativá-lo. Nesta fase, as marcações são simuladas e exigem supervisão.</p>
+    <p id="mode-intro" class="intro">Cadastre o dispositivo na obra correta e gere um código para ativá-lo. As marcações de demonstração são simuladas e exigem supervisão.</p>
     <div id="message" class="message" role="status" aria-live="polite" hidden></div>
     <section class="card" aria-labelledby="new-title">
       <h2 id="new-title">Cadastrar terminal de teste</h2>
@@ -35,7 +35,32 @@
       <div class="table-scroll"><table><thead><tr><th scope="col">Dispositivo</th><th scope="col">Obra</th><th scope="col">Situação</th><th scope="col">Ações</th></tr></thead><tbody id="terminals"><tr><td colspan="4">Carregando…</td></tr></tbody></table></div>
       <div class="pagination"><button id="previous" type="button" class="secondary" disabled>Anterior</button><span id="page-info"></span><button id="next" type="button" class="secondary" disabled>Próxima</button></div>
     </section>
-    <p class="footer-note">Protótipo experimental. Não substitui o ponto oficial. Nenhuma comparação facial é realizada nesta fase.</p>
+    <section id="face-reference-section" class="card" aria-labelledby="face-reference-title" hidden>
+      <p class="eyebrow">RECONHECIMENTO FACIAL · TESTE SUPERVISIONADO</p>
+      <h2 id="face-reference-title">Referência facial autorizada</h2>
+      <p>Use o cadastro existente do funcionário. Antes de tratar uma fotografia real, a organização deve confirmar a autorização e a base legal apropriada. O protótipo não comprova proteção contra apresentação de fotos ou vídeos.</p>
+      <p id="face-readiness" class="hint" role="status"></p>
+      <button id="face-purge-expired" type="button" class="secondary">Excluir referências expiradas</button>
+      <p class="hint">A validade bloqueia o uso da referência. Execute a exclusão de expiradas conforme a política aprovada; esta versão não agenda a limpeza automaticamente. Cópias de segurança seguem a política de retenção da organização.</p>
+      <div id="face-message" class="message" role="status" aria-live="polite" hidden></div>
+      <form id="face-reference-form" class="reference-lookup">
+        <label for="face-registration">Matrícula do funcionário<input id="face-registration" maxlength="120" required autocomplete="off" spellcheck="false"></label>
+        <button id="face-lookup" type="submit">Consultar referência</button>
+      </form>
+      <p id="face-reference-status" class="reference-status" role="status">Consulte a matrícula para verificar a referência e sua validade.</p>
+      <form id="face-reference-upload-form">
+        <label for="face-image">Fotografia de referência autorizada<input id="face-image" type="file" accept="image/jpeg,image/png" required aria-describedby="face-image-hint"></label>
+        <p id="face-image-hint" class="hint">JPEG ou PNG, até 2 MB, com apenas um rosto. A referência é protegida no servidor; não há URL pública da fotografia.</p>
+        <div class="fields">
+          <label for="face-authorization-basis">Base legal e autorização organizacional<textarea id="face-authorization-basis" rows="3" minlength="20" maxlength="500" required placeholder="Informe a base legal e a referência da autorização, sem dados desnecessários."></textarea></label>
+          <label for="face-retention-days">Validade da referência em dias<input id="face-retention-days" type="number" min="1" max="90" value="30" required><span class="hint">De 1 a 90 dias, conforme a política aprovada pela organização.</span></label>
+        </div>
+        <label class="check-label"><input id="face-authorization-confirmed" type="checkbox" required><span>Confirmo que a organização autorizou este tratamento e definiu uma base legal apropriada. A referência será usada somente no teste supervisionado descrito.</span></label>
+        <div class="actions"><button id="face-save" type="submit" disabled>Salvar referência autorizada</button><button id="face-delete" type="button" class="danger" disabled>Excluir referência facial</button></div>
+      </form>
+      <p class="hint">Atualizar ou excluir a referência impede o uso de verificações pendentes feitas com a versão anterior. A exclusão não apaga marcações históricas. Se a referência não puder ser usada, siga o procedimento alternativo oficial da empresa.</p>
+    </section>
+    <p id="mode-footer" class="footer-note">Protótipo experimental. Não substitui o ponto oficial. O modo de demonstração não realiza comparação facial.</p>
   </main>
 </body>
 </html>

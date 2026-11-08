@@ -1,4 +1,4 @@
-"""Scoped terminal credentials for supervised demonstration; never face recognition."""
+"""Scoped terminal credentials for supervised experimental attendance."""
 import hashlib
 import os
 import secrets
@@ -83,11 +83,20 @@ def device_in_transaction(db, request):
 
 
 def terminal_public(db, terminal):
+    facial = os.getenv('COMPAC_ATTENDANCE_MODE') == 'facial'
+    if facial:
+        from .face_engine import face_configuration
+        configuration = face_configuration()
+        ready = configuration['ready'] and os.getenv('COMPAC_FACE_SUPERVISED') == '1'
+    else:
+        ready = False
     return {'paired': True, 'terminal_name': terminal['name'],
             'work_name': service.row(db, 'works', terminal['work_id'])['name'],
             'server_time': service.utcnow().isoformat(), 'experimental': True,
             'time_zone': os.getenv('COMPAC_TIMEZONE', 'America/Sao_Paulo'),
-            'facial_recognition': False, 'verification_result': 'SIMULADO'}
+            'mode': 'facial' if facial else 'demo', 'facial_recognition': facial,
+            'face_ready': ready, 'supervised_only': True, 'anti_spoofing': False,
+            'verification_result': 'PENDENTE' if facial else 'SIMULADO'}
 
 
 def credential_rate(db, request, scope):
@@ -120,7 +129,7 @@ def register_device_routes(app, administrator):
     prefix = '/api/v1/attendance'
 
     def admin_demo(request: Request, user=Depends(administrator)):
-        service.demo_only()
+        service.experimental_only()
         secure_transport(request)
         return user
 
@@ -141,7 +150,7 @@ def register_device_routes(app, administrator):
 
     @app.post(prefix + '/terminal/activate', status_code=201)
     def activate(data: ActivationInput, request: Request):
-        service.demo_only()
+        service.experimental_only()
         secure_transport(request)
         with connect(write=True) as db:
             try:
@@ -176,7 +185,7 @@ def register_device_routes(app, administrator):
 
     @app.get(prefix + '/terminal/status')
     def status(request: Request):
-        service.demo_only()
+        service.experimental_only()
         secure_transport(request)
         with connect() as db:
             _, terminal, _ = device_in_transaction(db, request)
@@ -208,7 +217,11 @@ def register_device_routes(app, administrator):
 
     @app.post(prefix + '/terminal/mark', status_code=201)
     def mark(data: MarkInput, request: Request):
-        service.demo_only()
+        service.experimental_only()
+        facial = os.getenv('COMPAC_ATTENDANCE_MODE') == 'facial'
+        if facial:
+            from .face import facial_only, mark_facial
+            facial_only()
         secure_transport(request)
         key = validate_key(request.headers.get('Idempotency-Key'))
         with connect(write=True) as db:
@@ -218,13 +231,14 @@ def register_device_routes(app, administrator):
                 return response_error(exc)
 
             def operation():
-                binding = db.execute('SELECT device_session_hash FROM attendance_device_authorizations WHERE token_hash=?', (digest(data.authorization),)).fetchone()
+                binding_table = 'attendance_face_grants' if facial else 'attendance_device_authorizations'
+                binding = db.execute('SELECT device_session_hash FROM ' + binding_table + ' WHERE token_hash=?', (digest(data.authorization),)).fetchone()
                 if not binding or binding['device_session_hash'] != device['token_hash']:
                     raise HTTPException(403, 'Autorização inválida para este dispositivo.')
                 def commit():
                     credential_rate(db, request, 'mark:' + str(terminal['id']))
                     try:
-                        result = service.mark_test(db, data, actor, request.client.host if request.client else 'unknown')
+                        result = mark_facial(db, data, actor, device, terminal) if facial else service.mark_test(db, data, actor, request.client.host if request.client else 'unknown')
                     except HTTPException as exc:
                         if exc.status_code in (403, 404):
                             raise HTTPException(403, 'Não foi possível registrar neste terminal de teste.')
@@ -241,7 +255,7 @@ def register_device_routes(app, administrator):
 
     @app.post(prefix + '/terminal/logout')
     def logout(request: Request):
-        service.demo_only()
+        service.experimental_only()
         secure_transport(request)
         with connect(write=True) as db:
             token = digest(request.cookies.get(COOKIE, ''))

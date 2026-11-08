@@ -783,6 +783,9 @@ register_attendance(app, administrator)
 from .attendance.device import register_device_routes
 register_device_routes(app, administrator)
 
+from .attendance.face import register_face_routes
+register_face_routes(app, administrator)
+
 
 @app.get('/ponto-facial', include_in_schema=False)
 def attendance_terminal_page():

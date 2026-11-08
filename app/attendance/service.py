@@ -1,4 +1,4 @@
-"""Supervised test records only. No camera, image, face detector or matcher."""
+"""Shared experimental attendance rules and explicitly simulated records."""
 import hashlib
 import os
 import secrets
@@ -19,9 +19,9 @@ def utcnow():
     return datetime.now(timezone.utc)
 
 
-def demo_only():
+def experimental_only():
     allowed = (
-        os.getenv('COMPAC_ATTENDANCE_MODE', 'disabled') == 'demo'
+        os.getenv('COMPAC_ATTENDANCE_MODE', 'disabled') in ('demo', 'facial')
         and os.getenv('COMPAC_ENV') in ('development', 'test')
         and os.getenv('RENDER', '').lower() != 'true'
     )
@@ -32,6 +32,12 @@ def demo_only():
         from ..db import postgres_options
         if postgres_options(url).get('host') not in ('localhost', '127.0.0.1', '::1'):
             raise HTTPException(404, 'Demonstração permitida somente em banco local descartável.')
+
+
+def demo_only():
+    experimental_only()
+    if os.getenv('COMPAC_ATTENDANCE_MODE') != 'demo':
+        raise HTTPException(404, 'Marcações simuladas desativadas neste modo.')
 
 
 def emit_audit(db, user_id, action, entity, record_id=None, details=None):
