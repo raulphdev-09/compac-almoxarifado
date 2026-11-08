@@ -16,6 +16,10 @@ A estrutura de marcações supervisionadas de teste está documentada em [PONTO_
 
 Tela `/ponto-facial` com pré-visualização local da câmera, ativação individual do dispositivo e marcações **simuladas**. Configuração para ADMIN em Gestão de Pessoal → Terminais de ponto · teste. Consulte [execução, migração e limites](docs/PONTO_FASE_2.md) e [validação](docs/evidencias/ponto-fase2-validacao.md). A revisão aditiva `003_attendance_devices` preserva as anteriores; o módulo continua bloqueado em produção. Reconhecimento facial real pertence à Fase 3.
 
+## Comparação facial experimental — Fase 3
+
+OpenCV/YuNet/SFace opcionais, referências autorizadas criptografadas e captura temporária para comparação no servidor, com autorização de uso único vinculada ao dispositivo. Modos `demo` e `facial` separados; produção/Render/banco remoto continuam bloqueados. Consulte [instalação, operação e limites](docs/PONTO_FASE_3.md) e [evidências de testes](docs/evidencias/ponto-fase3-validacao.md). Não há proteção validada contra fotos/vídeos ou homologação como ponto oficial.
+
 ## Publicar gratuitamente: Render Free + Neon Free
 
 Esta configuração usa **Render Free para o site** e **Neon Free para guardar os dados em PostgreSQL**. O `render.yaml` não cria serviço pago, disco persistente nem banco pago na Render. Mantenha as duas contas no plano **Free** e respeite os limites desses serviços.
