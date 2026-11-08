@@ -14,7 +14,8 @@ from app.migrations import (
 )
 
 
-NEW_TABLES = ('attendance_device_authorizations', 'attendance_device_sessions', 'attendance_activation_codes',
+NEW_TABLES = ('attendance_facial_records', 'attendance_face_grants', 'attendance_face_references',
+              'attendance_device_authorizations', 'attendance_device_sessions', 'attendance_activation_codes',
               'attendance_records', 'attendance_authorizations', 'attendance_terminals')
 LEGACY_TABLES = tuple(
     statement.split('(')[0].split()[-1]

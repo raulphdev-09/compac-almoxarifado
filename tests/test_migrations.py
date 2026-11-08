@@ -22,7 +22,7 @@ def legacy_snapshot():
 def remove_test_migration():
     # Only called after client_factory created a disposable database/schema.
     with connect(write=True) as db:
-        for name in ('attendance_device_authorizations', 'attendance_device_sessions', 'attendance_activation_codes', 'attendance_records', 'attendance_authorizations', 'attendance_terminals', 'idempotency_requests', 'auth_attempts', 'schema_migrations'):
+        for name in ('attendance_facial_records', 'attendance_face_grants', 'attendance_face_references', 'attendance_device_authorizations', 'attendance_device_sessions', 'attendance_activation_codes', 'attendance_records', 'attendance_authorizations', 'attendance_terminals', 'idempotency_requests', 'auth_attempts', 'schema_migrations'):
             db.execute(f'DROP TABLE {name}')
 
 
@@ -35,7 +35,7 @@ def test_legacy_data_preserved_and_migration_repeatable(admin, catalog):
     assert legacy_snapshot() == before
     with connect() as db:
         assert status(db) == {'revision': REVISION, 'applied': True, 'checksum_valid': True}
-        assert db.execute('SELECT COUNT(*) FROM schema_migrations').fetchone()[0] == 3
+        assert db.execute('SELECT COUNT(*) FROM schema_migrations').fetchone()[0] == 4
 
 
 def test_production_start_requires_explicit_migration(client_factory, monkeypatch):

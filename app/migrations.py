@@ -65,8 +65,8 @@ CREATE INDEX IF NOT EXISTS attendance_records_work_time ON attendance_records(wo
 CREATE INDEX IF NOT EXISTS attendance_authorizations_expiry ON attendance_authorizations(expires_at);
 '''
 ATTENDANCE_CHECKSUM = hashlib.sha256(ATTENDANCE_SQL.encode()).hexdigest()
-REVISION = '003_attendance_devices'
-SQL = '''
+DEVICE_REVISION = '003_attendance_devices'
+DEVICE_SQL = '''
 CREATE TABLE IF NOT EXISTS attendance_activation_codes(
  token_hash TEXT NOT NULL PRIMARY KEY,
  terminal_id INTEGER NOT NULL REFERENCES attendance_terminals(id),
@@ -91,8 +91,44 @@ CREATE INDEX IF NOT EXISTS attendance_activation_terminal_expiry ON attendance_a
 CREATE INDEX IF NOT EXISTS attendance_device_terminal_expiry ON attendance_device_sessions(terminal_id,expires_at);
 CREATE INDEX IF NOT EXISTS attendance_device_authorization_session ON attendance_device_authorizations(device_session_hash);
 '''
+DEVICE_CHECKSUM = hashlib.sha256(DEVICE_SQL.encode()).hexdigest()
+REVISION = '004_attendance_face'
+SQL = '''
+CREATE TABLE IF NOT EXISTS attendance_face_references(
+ employee_id INTEGER PRIMARY KEY REFERENCES employees(id),
+ version_uid TEXT NOT NULL UNIQUE,
+ encrypted_image TEXT NOT NULL,
+ authorized_by INTEGER NOT NULL REFERENCES users(id),
+ authorization_basis TEXT NOT NULL,
+ created_at TEXT NOT NULL,
+ expires_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS attendance_face_grants(
+ token_hash TEXT NOT NULL PRIMARY KEY REFERENCES attendance_authorizations(token_hash),
+ device_session_hash TEXT NOT NULL REFERENCES attendance_device_sessions(token_hash),
+ reference_version TEXT NOT NULL,
+ algorithm TEXT NOT NULL CHECK(algorithm='OPENCV_SFACE_YUNET_V1')
+);
+CREATE TABLE IF NOT EXISTS attendance_facial_records(
+ id INTEGER PRIMARY KEY,
+ record_uid TEXT NOT NULL UNIQUE,
+ employee_id INTEGER NOT NULL REFERENCES employees(id),
+ work_id INTEGER NOT NULL REFERENCES works(id),
+ terminal_id INTEGER NOT NULL REFERENCES attendance_terminals(id),
+ mark_type TEXT NOT NULL CHECK(mark_type IN ('ENTRADA','INICIO_INTERVALO','RETORNO_INTERVALO','SAIDA')),
+ marked_at TEXT NOT NULL,
+ verification_method TEXT NOT NULL CHECK(verification_method='FACIAL_EXPERIMENTAL'),
+ verification_result TEXT NOT NULL CHECK(verification_result='CORRESPONDENCIA_CONFIRMADA'),
+ is_test INTEGER NOT NULL CHECK(is_test=1),
+ created_by INTEGER NOT NULL REFERENCES users(id),
+ authorization_hash TEXT NOT NULL UNIQUE REFERENCES attendance_face_grants(token_hash)
+);
+CREATE INDEX IF NOT EXISTS attendance_facial_records_employee_time ON attendance_facial_records(employee_id,marked_at,id);
+CREATE INDEX IF NOT EXISTS attendance_facial_records_work_time ON attendance_facial_records(work_id,marked_at,id);
+CREATE INDEX IF NOT EXISTS attendance_face_grants_session ON attendance_face_grants(device_session_hash);
+'''
 CHECKSUM = hashlib.sha256(SQL.encode()).hexdigest()
-MIGRATIONS = ((BASE_REVISION, BASE_SQL), (ATTENDANCE_REVISION, ATTENDANCE_SQL), (REVISION, SQL))
+MIGRATIONS = ((BASE_REVISION, BASE_SQL), (ATTENDANCE_REVISION, ATTENDANCE_SQL), (DEVICE_REVISION, DEVICE_SQL), (REVISION, SQL))
 CHECKSUMS = {version: hashlib.sha256(source.encode()).hexdigest() for version, source in MIGRATIONS}
 BASE_EXPECTED = {
     'idempotency_requests': (('user_id', 'scope', 'idempotency_key', 'request_hash', 'response_json', 'created_at'), ('user_id', 'scope', 'idempotency_key')),
@@ -108,10 +144,16 @@ DEVICE_EXPECTED = {
     'attendance_device_sessions': (('token_hash', 'terminal_id', 'created_by', 'created_at', 'expires_at', 'revoked_at'), ('token_hash',)),
     'attendance_device_authorizations': (('token_hash', 'device_session_hash'), ('token_hash',)),
 }
-EXPECTED = {**BASE_EXPECTED, **ATTENDANCE_EXPECTED, **DEVICE_EXPECTED}
+FACE_EXPECTED = {
+    'attendance_face_references': (('employee_id', 'version_uid', 'encrypted_image', 'authorized_by', 'authorization_basis', 'created_at', 'expires_at'), ('employee_id',)),
+    'attendance_face_grants': (('token_hash', 'device_session_hash', 'reference_version', 'algorithm'), ('token_hash',)),
+    'attendance_facial_records': (('id', 'record_uid', 'employee_id', 'work_id', 'terminal_id', 'mark_type', 'marked_at', 'verification_method', 'verification_result', 'is_test', 'created_by', 'authorization_hash'), ('id',)),
+}
+EXPECTED = {**BASE_EXPECTED, **ATTENDANCE_EXPECTED, **DEVICE_EXPECTED, **FACE_EXPECTED}
 BASE_INDEXES = {'auth_attempts_account_time', 'auth_attempts_origin_time', 'auth_attempts_time'}
 ATTENDANCE_INDEXES = {'attendance_records_employee_time', 'attendance_records_work_time', 'attendance_authorizations_expiry'}
 DEVICE_INDEXES = {'attendance_activation_terminal_expiry', 'attendance_device_terminal_expiry', 'attendance_device_authorization_session'}
+FACE_INDEXES = {'attendance_facial_records_employee_time', 'attendance_facial_records_work_time', 'attendance_face_grants_session'}
 
 
 def table_exists(db, name):
@@ -123,7 +165,9 @@ def table_exists(db, name):
 def statements(db, source=None):
     source = SQL if source is None else source
     if db.postgres:
-        source = source.replace('id INTEGER PRIMARY KEY', 'id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY')
+        # Only a standalone surrogate id is generated; employee_id is a shared
+        # employee key in face references and must never get its own identity.
+        source = re.sub(r'(?m)^(\s*)id INTEGER PRIMARY KEY', r'\1id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY', source)
         source = re.sub(r'\bINTEGER\b', 'BIGINT', source)
     return [statement.strip() for statement in source.split(';') if statement.strip()]
 
@@ -202,6 +246,15 @@ def validate_structure(db, *, through=REVISION):
     _validate_tables(db, DEVICE_EXPECTED)
     if not DEVICE_INDEXES <= _indexes(db, DEVICE_EXPECTED):
         raise RuntimeError('Schema incompleto: índices de dispositivo ausentes.')
+    if through == DEVICE_REVISION:
+        return
+    _validate_tables(db, FACE_EXPECTED)
+    if not FACE_INDEXES <= _indexes(db, FACE_EXPECTED):
+        raise RuntimeError('Schema incompleto: índices de ponto facial ausentes.')
+    if ('version_uid',) not in _unique_columns(db, 'attendance_face_references'):
+        raise RuntimeError('Schema incompleto: unicidade da referência facial ausente.')
+    if not {('record_uid',), ('authorization_hash',)} <= _unique_columns(db, 'attendance_facial_records'):
+        raise RuntimeError('Schema incompleto: unicidade dos registros faciais ausente.')
 
 
 def migrate(db, *, allow_apply):

@@ -6,18 +6,19 @@ import psycopg
 import pytest
 
 from app.db import connect, init_db
-from app.migrations import (BASE_CHECKSUM, ATTENDANCE_CHECKSUM, ATTENDANCE_REVISION,
-                            REVISION, SQL, status, statements, table_exists)
+from app.migrations import (BASE_CHECKSUM, BASE_REVISION, ATTENDANCE_CHECKSUM, ATTENDANCE_REVISION,
+                            DEVICE_SQL, status, statements, table_exists)
 
 
 TABLES = ('attendance_device_authorizations', 'attendance_device_sessions', 'attendance_activation_codes')
+LATER_TABLES = ('attendance_facial_records', 'attendance_face_grants', 'attendance_face_references')
 
 
 def previous_revision():
     with connect(write=True) as db:
-        for table in TABLES:
+        for table in LATER_TABLES + TABLES:
             db.execute('DROP TABLE ' + table)
-        db.execute('DELETE FROM schema_migrations WHERE version=?', (REVISION,))
+        db.execute('DELETE FROM schema_migrations WHERE version NOT IN (?,?)', (BASE_REVISION, ATTENDANCE_REVISION))
 
 
 def test_original_migration_checksums_remain_frozen():
@@ -51,7 +52,7 @@ def test_third_revision_failure_rolls_back_only_its_changes(client_factory):
     previous_revision()
     def failed(db, source=None):
         result = statements(db, source)
-        return result + ['INTENTIONALLY INVALID DEVICE MIGRATION'] if source == SQL else result
+        return result + ['INTENTIONALLY INVALID DEVICE MIGRATION'] if source == DEVICE_SQL else result
     with patch('app.migrations.statements', side_effect=failed):
         with pytest.raises((sqlite3.OperationalError, psycopg.ProgrammingError)):
             init_db(allow_migrations=True)
@@ -64,6 +65,8 @@ def test_third_revision_failure_rolls_back_only_its_changes(client_factory):
 @pytest.mark.parametrize('table', TABLES)
 def test_device_table_drift_is_rejected(client_factory, table):
     with connect(write=True) as db:
+        for name in LATER_TABLES:
+            db.execute('DROP TABLE ' + name)
         for name in TABLES[:TABLES.index(table) + 1]:
             db.execute('DROP TABLE ' + name)
     with pytest.raises(RuntimeError, match='incompleto'):
