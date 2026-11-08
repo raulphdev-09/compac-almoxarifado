@@ -1,0 +1,40 @@
+[
+  {
+    "path": "/health",
+    "status": 200,
+    "cache_control": null,
+    "body": {
+      "status": "ok"
+    }
+  },
+  {
+    "path": "/api/auth/status",
+    "status": 200,
+    "cache_control": "no-store",
+    "body": {
+      "needs_setup": false,
+      "setup_token_required": false
+    }
+  },
+  {
+    "path": "/ponto-facial",
+    "status": 200,
+    "cache_control": "no-store",
+    "has_terminal_ui": true
+  },
+  {
+    "path": "/api/v1/attendance/terminal/status",
+    "status": 404,
+    "body": {
+      "detail": "Módulo experimental de ponto desativado neste ambiente."
+    }
+  },
+  {
+    "path": "/api/stock",
+    "status": 401
+  },
+  {
+    "path": "/api/v1/attendance/records",
+    "status": 401
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "asset": "app.js",
+    "matches_validated_source": true
+  },
+  {
+    "asset": "styles.css",
+    "matches_validated_source": true
+  },
+  {
+    "asset": "attendance-terminal.js",
+    "matches_validated_source": true
+  },
+  {
+    "asset": "attendance-admin.js",
+    "matches_validated_source": true
+  }
+]
