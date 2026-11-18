@@ -130,7 +130,9 @@ def postgres_options(url):
 
 
 @contextmanager
-def connect(write=False):
+def connect(write=False, *, snapshot=False):
+    if write and snapshot:
+        raise ValueError('Snapshot de relatório permite somente leitura.')
     url = os.getenv('DATABASE_URL', '').strip()
     if url:
         # Keep transaction-pooling connections compatible without relying on
@@ -146,6 +148,9 @@ def connect(write=False):
         connection.row_factory = sqlite3.Row
         db = Database(connection)
     try:
+        if snapshot and db.postgres:
+            # Configure before the tenant-cutover guard below opens a snapshot.
+            connection.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
         if db.postgres and write:
             # Preserve the serialized-writer semantics of the original SQLite
             # workflow, including bootstrap and multi-item fulfillment.
@@ -156,6 +161,15 @@ def connect(write=False):
             connection.execute('PRAGMA foreign_keys=ON')
             if write:
                 connection.execute('BEGIN IMMEDIATE')
+            elif snapshot:
+                connection.execute('BEGIN')
+        if db.postgres and db.execute(
+            "SELECT 1 FROM information_schema.columns WHERE table_schema=current_schema() "
+            "AND table_name='works' AND column_name='organization_id'",
+        ).fetchone():
+            # A running legacy process must also stop after the tenant cutover,
+            # not just the next process that checks the migration ledger.
+            raise RuntimeError('Banco multiempresa exige o runtime CANTEOR; acesso legado bloqueado.')
         yield db
         connection.commit()
     except Exception:

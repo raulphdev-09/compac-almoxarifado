@@ -204,6 +204,11 @@
     DEVOLUCAO: "Devolução",
     TRANSFERENCIA: "Transferência",
     AJUSTE: "Ajuste",
+    CONSUMO: "Consumo",
+    EMPRESTIMO: "Empréstimo",
+    INVENTARIO_INICIAL: "Inventário inicial",
+    NOTA_FISCAL: "Nota fiscal",
+    OUTRO_RECEBIMENTO: "Outro recebimento",
     BOA: "Boa",
     REGULAR: "Regular",
     RUIM: "Ruim",
@@ -402,7 +407,9 @@
       ? `<button type="button" class="button primary" data-action="${E(action)}" ${extra}>${icon("plus")}${E(text)}</button>`
       : "";
   const exportButton = (type) =>
-    `<a class="button export-button" href="/api/export/${E(type)}" download>${icon("download")}Exportar</a>`;
+    ["stock", "movements"].includes(type)
+      ? `<a class="button export-button" href="/documentos?report=${E(type)}">${icon("download")}Exportar</a>`
+      : `<a class="button export-button" href="/api/export/${E(type)}" download>${icon("download")}Exportar</a>`;
   function table(headers, rows, cls = "") {
     const filterable = rows.some((row) => row.includes("data-search="));
     return `<div class="table-wrap"><table class="data-table ${cls}"><thead><tr>${headers.map((h) => `<th scope="col">${E(h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}${filterable ? `<tr class="filter-empty" hidden><td colspan="${headers.length}">${empty("Nenhum resultado encontrado", "Experimente outro termo ou remova os filtros.", "search", "", true)}</td></tr>` : ""}</tbody></table></div>`;
@@ -607,6 +614,8 @@
           `<div class="nav-group-label">${g.group}</div>${g.items.map(([id, label, ico]) => `<a href="#${id}" class="nav-link${route === id ? " active" : ""}"${route === id ? ' aria-current="page"' : ""}><span class="nav-icon">${icon(ico)}</span><span>${label}</span></a>`).join("")}`,
       )
       .join("");
+    $("#main-nav").insertAdjacentHTML("beforeend",
+      `<div class="nav-group-label">ARQUIVOS DA OPERAÇÃO</div><a href="/documentos" class="nav-link"><span class="nav-icon">${icon("download")}</span><span>Importar e exportar</span></a>`);
     if (isAdmin()) $("#main-nav").insertAdjacentHTML("beforeend",
       `<div class="nav-group-label">GESTÃO DE PESSOAL</div><a href="/ponto-facial/configuracao" class="nav-link"><span class="nav-icon">${icon("users")}</span><span>Terminais de ponto · teste</span></a>`);
     $("#mobile-nav").innerHTML =
@@ -770,7 +779,7 @@
       pageHead(
         "Visão geral",
         "O que acontece na sua operação, em um só lugar.",
-        `<div class="date-pill">${icon("calendar")}${E(today)}</div>`,
+        `<a class="button export-button" href="/documentos?report=dashboard">${icon("download")}Exportar resumo</a><div class="date-pill">${icon("calendar")}${E(today)}</div>`,
         "SEU DIA, SOB CONTROLE",
       ) +
       `<section class="welcome-banner"><div class="welcome-content"><span class="eyebrow light">PRONTO PARA MAIS UM DIA?</span><h2>${E(greeting)}, <span class="welcome-title">${E(first)}.</span></h2><p>Acompanhe os materiais, organize as demandas e mantenha a operação em movimento.</p></div>${canWrite() ? `<button type="button" class="button lime" data-action="new-movement">${icon("plus")}Nova movimentação ${icon("arrowUpRight")}</button>` : `<a class="button lime" href="#estoque">Consultar estoque ${icon("arrowUpRight")}</a>`}</section><div class="stats-grid">${statCard("Materiais cadastrados", d.materials, "box", "Base de materiais da operação", "estoque")}${statCard("Chamados em aberto", d.open_tickets, "ticket", "Acompanhe as demandas da equipe", "chamados")}${statCard("Requisições pendentes", d.pending_requisitions, "clipboard", "Solicitações aguardando andamento", "requisicoes")}${statCard("Despesas registradas", d.expenses, "wallet", "Total acumulado nas obras", "despesas", true)}</div><div class="dashboard-grid"><section class="panel table-panel"><div class="panel-header"><div><h2>Últimas movimentações</h2><p>O fluxo mais recente do seu almoxarifado</p></div><a href="#movimentacoes" class="text-link">Ver todas ${icon("arrowUpRight")}</a></div>${recentRows.length ? table(["Material", "Tipo", "Quantidade", "Data", ""], recentRows, "dashboard-table") : empty("Seu estoque começa por aqui", "Cadastre os materiais e registre a primeira movimentação para acompanhar seu fluxo.", "arrows", canWrite() ? '<button type="button" class="button small" data-action="new-movement">Registrar movimentação</button>' : "", true)}</section><section class="panel"><div class="panel-header"><div><h2>Fique de olho</h2><p>Pontos que merecem sua atenção</p></div><span class="badge ${alerts.length ? "amber" : "green"}">${alerts.length ? `${fmt(alerts.length)} alertas` : "Em dia"}</span></div>${alertRows ? `<div class="alerts-list">${alertRows}</div><div class="panel-body alert-panel-link"><a href="#alertas" class="text-link">Ver todos os alertas ${icon("arrowRight")}</a></div>` : empty("Tudo em ordem por aqui", "Os alertas de estoque, prazos e manutenção aparecerão neste espaço.", "checkCircle", "", true)}</section><section class="panel"><div class="panel-header"><div><h2>Despesas por obra</h2><p>Onde os recursos estão sendo aplicados</p></div><a href="#despesas" class="text-link">Detalhes ${icon("arrowUpRight")}</a></div><div class="panel-body">${
@@ -1156,7 +1165,7 @@
         [...shown.map(([, f]) => f.label), "Ação"],
         rows.map(
           (r) =>
-            `<tr ${filterRow(fields.map(([k, f]) => (f.kind === "relation" ? lookup(f.relation, r[k]) : r[k])).join(" "), r.status || (r.active === false ? "inactive" : "active"))}>${shown.map(([key, f], i) => `<td class="${i === 0 ? "primary-cell " : ""}${["text", "textarea"].includes(f.kind) ? "cell-wrap" : ""}">${catalogCell(r[key], f)}</td>`).join("")}<td><button type="button" class="table-action" data-action="${canWrite() ? "edit" : "view"}-catalog" data-entity="${entity}" data-id="${r.id}">${icon(canWrite() ? "edit" : "eye")}${canWrite() ? "Editar" : "Detalhes"}</button></td></tr>`,
+            `<tr ${filterRow(fields.map(([k, f]) => (f.kind === "relation" ? lookup(f.relation, r[k]) : r[k])).join(" "), r.status || (r.active === false ? "inactive" : "active"))}>${shown.map(([key, f], i) => `<td class="${i === 0 ? "primary-cell " : ""}${["text", "textarea"].includes(f.kind) ? "cell-wrap" : ""}">${catalogCell(r[key], f)}</td>`).join("")}<td><button type="button" class="table-action" data-action="${canWrite() ? "edit" : "view"}-catalog" data-entity="${entity}" data-id="${r.id}">${icon(canWrite() ? "edit" : "eye")}${canWrite() ? "Editar" : "Detalhes"}</button>${entity === "materials" && canWrite() ? `<button type="button" class="table-action" data-action="add-material-stock" data-id="${r.id}">${icon("plus")}Adicionar estoque</button>` : ""}</td></tr>`,
         ),
         {
           placeholder: "Buscar em " + m.title.toLowerCase() + "…",
@@ -1325,7 +1334,8 @@
     const schema = S.schema[entity];
     const m = entityInfo[entity];
     if (!schema || !m) throw new Error("Cadastro não disponível.");
-    await Promise.all([catalog(entity), loadRelations(entity)]);
+    await Promise.all([catalog(entity), loadRelations(entity),
+      ...(entity === "materials" && !id && !viewOnly ? [catalog("locations", true)] : [])]);
     const row = id
       ? (S.cache[entity] || []).find((r) => String(r.id) === String(id))
       : null;
@@ -1393,23 +1403,50 @@
       row
         ? "Mantenha as informações da sua operação atualizadas."
         : "Os campos com * são obrigatórios.",
-      `<div class="form-grid">${fields}</div>${entity === "expenses" ? '<div class="dialog-notice notice-below">O valor total da despesa será calculado pela quantidade × custo unitário. Este cadastro não movimenta o estoque.</div>' : ""}`,
+      `<div class="form-grid">${fields}</div>${entity === "materials" && !row ? `<h3 class="detail-section-title">Estoque inicial</h3><p class="muted">Deixe zero para cadastrar sem saldo. Uma quantidade maior que zero registra uma entrada no histórico.</p><div class="form-grid">${field("initial_quantity", "Quantidade inicial", "number", "0", true, 'step="0.001" min="0"')}${selectField("initial_location_id", "Local do estoque inicial", options(S.cache.locations, ""), false)}${selectField("initial_source_type", "Origem do estoque inicial", enumOptions(["INVENTARIO_INICIAL", "NOTA_FISCAL", "OUTRO_RECEBIMENTO"], "INVENTARIO_INICIAL"))}${field("initial_source_reference", "Referência do recebimento", "text", "", false, 'maxlength="200" placeholder="Número da nota ou identificação do recebimento"')}</div>` : ""}${entity === "expenses" ? '<div class="dialog-notice notice-below">O valor total da despesa será calculado pela quantidade × custo unitário. Este cadastro não movimenta o estoque.</div>' : ""}`,
       row ? "Salvar alterações" : "Cadastrar",
-      async (form) => {
+      async (form, intent) => {
         const body = formData(form);
         for (const [key, f] of Object.entries(schema.fields)) {
           if (f.kind === "boolean") body[key] = form.elements[key].checked;
           else if (body[key] === "" && !f.required) body[key] = null;
         }
+        if (entity === "materials" && !row) {
+          body.initial_stock = { quantity: body.initial_quantity };
+          if (Number(body.initial_quantity) > 0) {
+            body.initial_stock.location_id = body.initial_location_id;
+            body.initial_stock.source_type = body.initial_source_type;
+            body.initial_stock.source_reference = body.initial_source_reference;
+          }
+          for (const key of ["initial_quantity", "initial_location_id", "initial_source_type", "initial_source_reference"]) delete body[key];
+        }
+        const payload = JSON.stringify(body);
+        if (intent.payload !== null && intent.payload !== payload) intent.key = crypto.randomUUID();
+        intent.payload = payload;
         await api(`/catalog/${entity}${row ? "/" + row.id : ""}`, {
           method: row ? "PUT" : "POST",
           body,
+          ...(body.initial_stock ? { headers: { "Idempotency-Key": intent.key } } : {}),
         });
         S.cache = {};
         toast(row ? "Cadastro atualizado." : "Cadastro realizado.");
         await route();
       },
     );
+    if (entity === "materials" && !row) {
+      const form = $("#modal-form");
+      const updateInitialStock = () => {
+        const hasStock = Number(form.elements.initial_quantity.value) > 0;
+        for (const name of ["initial_location_id", "initial_source_type", "initial_source_reference"]) {
+          const input = form.elements[name];
+          input.disabled = !hasStock;
+          input.required = hasStock && (name !== "initial_source_reference" || form.elements.initial_source_type.value !== "INVENTARIO_INICIAL");
+        }
+      };
+      form.elements.initial_quantity.addEventListener("input", updateInitialStock);
+      form.elements.initial_source_type.addEventListener("change", updateInitialStock);
+      updateInitialStock();
+    }
   }
   async function openMovement(prefill = {}) {
     requireWrite();
@@ -1428,7 +1465,7 @@
     dialog(
       "Nova movimentação",
       "Registre o fluxo de materiais do almoxarifado.",
-      `<div class="dialog-notice" id="movement-guidance">Cada movimentação atualiza os saldos e mantém o histórico da operação.</div><div class="form-grid">${selectField("type", "Tipo de movimentação", enumOptions(types, prefill.type || "ENTRADA"), true)}${selectField("material_id", "Material", options(S.cache.materials, prefill.material_id), true)}${field("quantity", "Quantidade", "number", prefill.quantity || "", true, 'step="any" min="0.001" placeholder="0"')}<div class="field" id="movement-origin">${selectField("origin_id", "Local de origem", options(S.cache.locations, prefill.origin_id), true).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-destination">${selectField("destination_id", "Local de destino", options(S.cache.locations, prefill.destination_id), true).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-employee">${selectField("employee_id", "Funcionário", options(S.cache.employees, prefill.employee_id, "Sem empréstimo vinculado"), false).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-due">${field("due_date", "Previsão de devolução", "date", "").replace(/^<div class="field">|<\/div>$/g, "")}</div>${field("notes", "Observações", "textarea", "", false, 'maxlength="2000" placeholder="Informações que ajudam a acompanhar esta movimentação"')}</div>`,
+      `<div class="dialog-notice" id="movement-guidance">Cada movimentação atualiza os saldos e mantém o histórico da operação.</div><div class="form-grid">${selectField("type", "Tipo de movimentação", enumOptions(types, prefill.type || "ENTRADA"), true)}${selectField("material_id", "Material", options(S.cache.materials, prefill.material_id), true)}${field("quantity", "Quantidade", "number", prefill.quantity || "", true, 'step="0.001" min="0.001" placeholder="0"')}<div class="field" id="movement-purpose">${selectField("purpose", "Finalidade da saída", enumOptions(["CONSUMO", "EMPRESTIMO"], prefill.purpose || (prefill.employee_id ? "EMPRESTIMO" : "CONSUMO")), true).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-origin">${selectField("origin_id", "Local de origem", options(S.cache.locations, prefill.origin_id), true).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-destination">${selectField("destination_id", "Local de destino", options(S.cache.locations, prefill.destination_id), true).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-employee">${selectField("employee_id", "Responsável", options(S.cache.employees, prefill.employee_id, "Sem responsável vinculado"), false).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-due">${field("due_date", "Previsão de devolução", "date", "").replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-source">${selectField("source_type", "Origem do recebimento", enumOptions(["INVENTARIO_INICIAL", "NOTA_FISCAL", "OUTRO_RECEBIMENTO"], "INVENTARIO_INICIAL"), true).replace(/^<div class="field">|<\/div>$/g, "")}</div><div class="field" id="movement-reference">${field("source_reference", "Referência do recebimento", "text", "", false, 'maxlength="200" placeholder="Número da nota ou identificação do recebimento"').replace(/^<div class="field">|<\/div>$/g, "")}</div>${field("notes", "Observações", "textarea", "", false, 'maxlength="2000" placeholder="Informações que ajudam a acompanhar esta movimentação"')}</div>`,
       "Registrar movimentação",
       async (form, intent) => {
         const body = formData(form);
@@ -1437,7 +1474,12 @@
         if (!["ENTRADA", "DEVOLUCAO", "TRANSFERENCIA", "AJUSTE"].includes(type))
           delete body.destination_id;
         if (!["SAIDA", "DEVOLUCAO"].includes(type)) delete body.employee_id;
-        if (type !== "SAIDA") delete body.due_date;
+        if (type !== "SAIDA") delete body.purpose;
+        if (type !== "SAIDA" || body.purpose !== "EMPRESTIMO") delete body.due_date;
+        if (type !== "ENTRADA") {
+          delete body.source_type;
+          delete body.source_reference;
+        }
         if (type === "TRANSFERENCIA" && body.origin_id === body.destination_id)
           throw new Error("Selecione locais diferentes para origem e destino.");
         const payload = JSON.stringify(body);
@@ -1455,7 +1497,9 @@
     function updateMovementFields() {
       const form = $("#modal-form");
       const type = form.elements.type.value;
+      const isLoan = type === "SAIDA" && form.elements.purpose.value === "EMPRESTIMO";
       for (const [id, shown, required] of [
+        ["purpose", type === "SAIDA", true],
         ["origin", ["SAIDA", "TRANSFERENCIA"].includes(type), true],
         [
           "destination",
@@ -1465,9 +1509,11 @@
         [
           "employee",
           ["SAIDA", "DEVOLUCAO"].includes(type),
-          type === "DEVOLUCAO",
+          type === "DEVOLUCAO" || isLoan,
         ],
-        ["due", type === "SAIDA", false],
+        ["due", isLoan, false],
+        ["source", type === "ENTRADA", true],
+        ["reference", type === "ENTRADA", form.elements.source_type.value !== "INVENTARIO_INICIAL"],
       ]) {
         const wrap = $("#movement-" + id);
         wrap.hidden = !shown;
@@ -1484,7 +1530,7 @@
         ENTRADA:
           "Informe o material recebido e o local onde ele ficará armazenado.",
         SAIDA:
-          "Vincule um funcionário para registrar um empréstimo e acompanhar a devolução.",
+          isLoan ? "O empréstimo exige um responsável e ficará pendente até a devolução." : "O consumo baixa o saldo. O responsável é opcional e não gera empréstimo ou devolução pendente.",
         DEVOLUCAO:
           "A devolução deve corresponder a um empréstimo em aberto do funcionário.",
         TRANSFERENCIA:
@@ -1494,6 +1540,8 @@
       }[type];
     }
     $("#field-type").onchange = updateMovementFields;
+    $("#field-purpose").onchange = updateMovementFields;
+    $("#field-source_type").onchange = updateMovementFields;
     updateMovementFields();
   }
   function itemRow() {
@@ -1817,6 +1865,7 @@
     "change-password": openPassword,
     menu: () => openSidebar(),
     "new-movement": () => openMovement(),
+    "add-material-stock": (el) => openMovement({ type: "ENTRADA", material_id: el.dataset.id }),
     "show-loans": () => {
       S.tab = "loans";
       if (location.hash === "#movimentacoes") return route();

@@ -18,9 +18,10 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from .catalog import ENTITIES
 from .db import connect, init_db
+from .passwords import hash_password, verify_password
 from .security import (
     FAILURE_WINDOW_SECONDS, credential_keys, failure_state, limited,
-    mutation_origin_allowed, record_failure,
+    mutation_origin_allowed, record_failure, transaction_actor,
 )
 
 STATIC = Path(__file__).parent / 'static'
@@ -95,18 +96,6 @@ def password(value):
     if len(value) < 10:
         fail('A senha deve conter pelo menos 10 caracteres.')
     return value
-
-
-def hash_password(value):
-    salt = secrets.token_bytes(16)
-    digest = hashlib.scrypt(value.encode(), salt=salt, n=16384, r=8, p=1)
-    return salt.hex() + ':' + digest.hex()
-
-
-def verify_password(value, encoded):
-    salt, digest = encoded.split(':')
-    derived = hashlib.scrypt(value.encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1)
-    return hmac.compare_digest(derived.hex(), digest)
 
 
 def public_user(row):
@@ -324,7 +313,7 @@ def users(user=Depends(current_user)):
 
 
 @app.post('/api/users', status_code=201)
-def add_user(data: dict, user=Depends(administrator)):
+def add_user(data: dict, request: Request, user=Depends(administrator)):
     username = text(data.get('username'), 'Usuário', maximum=80)
     name = text(data.get('name'), 'Nome', maximum=120)
     role = data.get('role')
@@ -332,14 +321,19 @@ def add_user(data: dict, user=Depends(administrator)):
         fail('Perfil inválido.')
     hashed = hash_password(password(data.get('password')))
     with connect(write=True) as db:
+        user = transaction_actor(db, request, roles=('ADMIN',), at=now())
         key = db.execute('INSERT INTO users(username,name,password_hash,role,created_at) VALUES(?,?,?,?,?) RETURNING id', (username, name, hashed, role, now())).fetchone()['id']
         audit(db, user['id'], 'CRIAR', 'users', key, {'username': username, 'role': role})
         return public_user(reference(db, 'users', key))
 
 
 @app.patch('/api/users/{key}')
-def edit_user(key: int, data: dict, user=Depends(administrator)):
+def edit_user(key: int, data: dict, request: Request, user=Depends(administrator)):
+    # Compute new hashes before the writer lock, then authorize against the
+    # session and role that are actually current when the transaction begins.
+    hashed = hash_password(password(data['password'])) if 'password' in data else None
     with connect(write=True) as db:
+        user = transaction_actor(db, request, roles=('ADMIN',), at=now())
         row = reference(db, 'users', key)
         role, active = data.get('role', row['role']), data.get('active', bool(row['active']))
         if role not in ROLES or not isinstance(active, bool):
@@ -348,7 +342,7 @@ def edit_user(key: int, data: dict, user=Depends(administrator)):
             fail('Você não pode remover seu próprio acesso de administrador.')
         db.execute('UPDATE users SET role=?,active=? WHERE id=?', (role, int(active), key))
         if 'password' in data:
-            db.execute('UPDATE users SET password_hash=? WHERE id=?', (hash_password(password(data['password'])), key))
+            db.execute('UPDATE users SET password_hash=? WHERE id=?', (hashed, key))
         if 'password' in data or not active or role != row['role']:
             db.execute('DELETE FROM sessions WHERE user_id=?', (key,))
         audit(db, user['id'], 'ATUALIZAR', 'users', key, {'role': role, 'active': active, 'password_changed': 'password' in data})
@@ -404,21 +398,48 @@ def list_entity(entity: str, user=Depends(current_user)):
 
 
 @app.post('/api/catalog/{entity}', status_code=201)
-def create_entity(entity: str, data: dict, user=Depends(operator)):
+def create_entity(entity: str, data: dict, request: Request, user=Depends(operator)):
     if entity not in ENTITIES:
         fail('Cadastro não encontrado.', 404)
     with connect(write=True) as db:
-        values = validate_entity(db, entity, data)
-        key = db.execute(f"INSERT INTO {entity}({','.join(values)}) VALUES({','.join('?' for _ in values)}) RETURNING id", tuple(values.values())).fetchone()['id']
-        audit(db, user['id'], 'CRIAR', entity, key, values)
-        return dict(reference(db, entity, key))
+        user = transaction_actor(db, request, roles=('ADMIN', 'OPERADOR'), at=now())
+        initial = data.get('initial_stock') if entity == 'materials' else None
+        fields = {k: v for k, v in data.items() if k != 'initial_stock'} if entity == 'materials' else data
+
+        def operation():
+            amount = 0
+            if initial is not None:
+                if not isinstance(initial, dict) or set(initial) - {'quantity', 'location_id', 'source_type', 'source_reference'}:
+                    fail('Estoque inicial inválido.')
+                amount = quantity(initial.get('quantity', '0'), 0)
+                stock_origin(initial, required=amount > 0)
+                if initial.get('location_id') not in (None, ''):
+                    reference(db, 'locations', initial['location_id'])
+                if amount and initial.get('location_id') in (None, ''):
+                    fail('Informe a localização do estoque inicial.')
+            values = validate_entity(db, entity, fields)
+            key = db.execute(f"INSERT INTO {entity}({','.join(values)}) VALUES({','.join('?' for _ in values)}) RETURNING id", tuple(values.values())).fetchone()['id']
+            audit(db, user['id'], 'CRIAR', entity, key, values)
+            if amount:
+                perform_movement(db, {'type': 'ENTRADA', 'material_id': key,
+                                     'quantity': initial['quantity'], 'destination_id': initial['location_id'],
+                                     'source_type': initial.get('source_type'), 'source_reference': initial.get('source_reference'),
+                                     'notes': 'Estoque inicial do cadastro.'}, user)
+            return dict(reference(db, entity, key))
+
+        if initial is not None:
+            from .idempotency import replay_or_execute, validate_key
+            attempt = validate_key(request.headers.get('Idempotency-Key'))
+            return replay_or_execute(db, user['id'], 'POST /api/catalog/materials', attempt, data, operation)
+        return operation()
 
 
 @app.put('/api/catalog/{entity}/{key}')
-def update_entity(entity: str, key: int, data: dict, user=Depends(operator)):
+def update_entity(entity: str, key: int, data: dict, request: Request, user=Depends(operator)):
     if entity not in ENTITIES:
         fail('Cadastro não encontrado.', 404)
     with connect(write=True) as db:
+        user = transaction_actor(db, request, roles=('ADMIN', 'OPERADOR'), at=now())
         previous = dict(reference(db, entity, key))
         values = validate_entity(db, entity, data)
         if entity == 'materials' and any(values[field] != previous[field] for field in ('unit', 'individualizable')):
@@ -448,6 +469,19 @@ def balance_delta(db, material, location, delta):
     db.execute('UPDATE balances SET quantity=quantity+? WHERE material_id=? AND location_id=?', (delta, material, location))
 
 
+def stock_origin(data, required=False):
+    source = data.get('source_type')
+    ref = data.get('source_reference')
+    if source in (None, ''):
+        if required or ref not in (None, ''):
+            fail('Informe a origem do recebimento.')
+        return None, None
+    if source not in ('INVENTARIO_INICIAL', 'NOTA_FISCAL', 'OUTRO_RECEBIMENTO'):
+        fail('Origem do recebimento inválida.')
+    ref = text(ref or '', 'Referência do recebimento', source != 'INVENTARIO_INICIAL', 200)
+    return source, ref
+
+
 def perform_movement(db, data, user, requisition=None):
     kind = data.get('type')
     if kind not in ('ENTRADA', 'SAIDA', 'DEVOLUCAO', 'TRANSFERENCIA', 'AJUSTE'):
@@ -465,6 +499,16 @@ def perform_movement(db, data, user, requisition=None):
         fail('Origem e destino devem ser diferentes.')
     if data.get('employee_id') not in (None, ''):
         employee = (reference if kind == 'DEVOLUCAO' else active_reference)(db, 'employees', data['employee_id'])['id']
+    purpose = data.get('purpose')
+    if purpose is not None and (kind != 'SAIDA' or purpose not in ('CONSUMO', 'EMPRESTIMO')):
+        fail('Finalidade de saída inválida.')
+    if kind == 'SAIDA':
+        purpose = purpose or ('EMPRESTIMO' if employee else 'CONSUMO')
+        if purpose == 'EMPRESTIMO' and not employee:
+            fail('Informe o funcionário responsável pelo empréstimo.')
+    source_type, source_reference = stock_origin(data)
+    if source_type and kind != 'ENTRADA':
+        fail('A origem documental é informada somente no recebimento.')
     notes = text(data.get('notes', ''), 'Justificativa', kind == 'AJUSTE') or ''
     due_date = None
     if kind == 'SAIDA' and employee and data.get('due_date'):
@@ -496,9 +540,10 @@ def perform_movement(db, data, user, requisition=None):
     recorded = delta if kind == 'AJUSTE' else amount
     key = db.execute('INSERT INTO movements(type,material_id,quantity,origin_id,destination_id,employee_id,notes,user_id,created_at,requisition_id) VALUES(?,?,?,?,?,?,?,?,?,?) RETURNING id',
                      (kind, material, recorded, origin, destination, employee, notes, user['id'], now(), requisition)).fetchone()['id']
-    if kind == 'SAIDA' and employee:
+    if kind == 'SAIDA' and purpose == 'EMPRESTIMO':
         db.execute('INSERT INTO loans(employee_id,material_id,location_id,quantity,due_date,movement_id,created_at) VALUES(?,?,?,?,?,?,?)', (employee, material, origin, amount, due_date, key, now()))
-    audit(db, user['id'], kind, 'movements', key, {'material_id': material, 'quantity': recorded / 1000, 'origin_id': origin, 'destination_id': destination, 'notes': notes})
+    audit(db, user['id'], kind, 'movements', key, {'material_id': material, 'quantity': recorded / 1000, 'origin_id': origin, 'destination_id': destination, 'notes': notes,
+                                                'purpose': purpose, 'source_type': source_type, 'source_reference': source_reference})
     return key
 
 
@@ -508,6 +553,8 @@ def add_movement(data: dict, request: Request, user=Depends(operator)):
 
     key = validate_key(request.headers.get('Idempotency-Key'))
     with connect(write=True) as db:
+        required = ('ADMIN',) if data.get('type') == 'AJUSTE' else ('ADMIN', 'OPERADOR')
+        user = transaction_actor(db, request, roles=required, at=now())
         return replay_or_execute(
             db, user['id'], 'POST /api/movements', key, data,
             lambda: {'id': perform_movement(db, data, user)},
@@ -517,7 +564,10 @@ def add_movement(data: dict, request: Request, user=Depends(operator)):
 @app.get('/api/movements')
 def movements(user=Depends(current_user)):
     with connect() as db:
-        return [scaled(row) for row in db.execute('SELECT m.*,mat.description material,mat.unit,o.name origin,d.name destination,e.name employee,u.name author FROM movements m JOIN materials mat ON mat.id=m.material_id LEFT JOIN locations o ON o.id=m.origin_id LEFT JOIN locations d ON d.id=m.destination_id LEFT JOIN employees e ON e.id=m.employee_id JOIN users u ON u.id=m.user_id ORDER BY m.id DESC')]
+        rows = [scaled(row) for row in db.execute("SELECT m.*,mat.description material,mat.unit,o.name origin,d.name destination,e.name employee,u.name author,CASE WHEN m.type='SAIDA' AND EXISTS(SELECT 1 FROM loans lp WHERE lp.movement_id=m.id) THEN 'EMPRESTIMO' WHEN m.type='SAIDA' THEN 'LEGACY_UNCLASSIFIED' ELSE NULL END purpose,NULL source_type,NULL source_reference FROM movements m JOIN materials mat ON mat.id=m.material_id LEFT JOIN locations o ON o.id=m.origin_id LEFT JOIN locations d ON d.id=m.destination_id LEFT JOIN employees e ON e.id=m.employee_id JOIN users u ON u.id=m.user_id ORDER BY m.id DESC")]
+        from .reporting import _legacy_metadata
+        _legacy_metadata(db, rows)
+        return rows
 
 
 def stock_rows(db):
@@ -546,8 +596,9 @@ def requisitions(user=Depends(current_user)):
 
 
 @app.post('/api/requisitions', status_code=201)
-def add_requisition(data: dict, user=Depends(operator)):
+def add_requisition(data: dict, request: Request, user=Depends(operator)):
     with connect(write=True) as db:
+        user = transaction_actor(db, request, roles=('ADMIN', 'OPERADOR'), at=now())
         work = active_reference(db, 'works', data.get('work_id'))['id']
         priority = data.get('priority')
         if priority not in PRIORITIES:
@@ -568,8 +619,10 @@ def add_requisition(data: dict, user=Depends(operator)):
 
 
 @app.post('/api/requisitions/{key}/action')
-def requisition_action(key: int, data: dict, user=Depends(operator)):
+def requisition_action(key: int, data: dict, request: Request, user=Depends(operator)):
     with connect(write=True) as db:
+        required = ('ADMIN',) if data.get('action') == 'APROVAR' else ('ADMIN', 'OPERADOR')
+        user = transaction_actor(db, request, roles=required, at=now())
         row = reference(db, 'requisitions', key)
         action = data.get('action')
         if action == 'CANCELAR':
@@ -613,12 +666,13 @@ def assignee_reference(db, value):
 
 
 @app.post('/api/tickets', status_code=201)
-def add_ticket(data: dict, user=Depends(operator)):
+def add_ticket(data: dict, request: Request, user=Depends(operator)):
     title = text(data.get('title'), 'Título', maximum=160)
     description = text(data.get('description'), 'Descrição', maximum=5000)
     if data.get('priority') not in PRIORITIES:
         fail('Prioridade inválida.')
     with connect(write=True) as db:
+        user = transaction_actor(db, request, roles=('ADMIN', 'OPERADOR'), at=now())
         work = reference(db, 'works', data.get('work_id'), True)
         assignee = assignee_reference(db, data.get('assignee_id'))
         key = db.execute('INSERT INTO tickets(title,description,priority,work_id,assignee_id,creator_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?) RETURNING id', (title, description, data['priority'], work['id'] if work else None, assignee, user['id'], now(), now())).fetchone()['id']
@@ -636,9 +690,10 @@ def ticket_detail(key: int, user=Depends(current_user)):
 
 
 @app.post('/api/tickets/{key}/comments', status_code=201)
-def add_comment(key: int, data: dict, user=Depends(operator)):
+def add_comment(key: int, data: dict, request: Request, user=Depends(operator)):
     body = text(data.get('body'), 'Comentário', maximum=5000)
     with connect(write=True) as db:
+        user = transaction_actor(db, request, roles=('ADMIN', 'OPERADOR'), at=now())
         reference(db, 'tickets', key)
         cid = db.execute('INSERT INTO ticket_comments(ticket_id,user_id,body,created_at) VALUES(?,?,?,?) RETURNING id', (key, user['id'], body, now())).fetchone()['id']
         db.execute('UPDATE tickets SET updated_at=? WHERE id=?', (now(), key))
@@ -647,8 +702,9 @@ def add_comment(key: int, data: dict, user=Depends(operator)):
 
 
 @app.patch('/api/tickets/{key}')
-def edit_ticket(key: int, data: dict, user=Depends(operator)):
+def edit_ticket(key: int, data: dict, request: Request, user=Depends(operator)):
     with connect(write=True) as db:
+        user = transaction_actor(db, request, roles=('ADMIN', 'OPERADOR'), at=now())
         row = reference(db, 'tickets', key)
         transitions = {'ABERTO': ['EM_ANDAMENTO', 'CANCELADO'], 'EM_ANDAMENTO': ['RESOLVIDO', 'CANCELADO'], 'RESOLVIDO': ['ABERTO'], 'CANCELADO': ['ABERTO']}
         status = data.get('status', row['status'])
@@ -670,8 +726,9 @@ def maintenance(user=Depends(current_user)):
 
 
 @app.post('/api/maintenance', status_code=201)
-def open_maintenance(data: dict, user=Depends(operator)):
+def open_maintenance(data: dict, request: Request, user=Depends(operator)):
     with connect(write=True) as db:
+        user = transaction_actor(db, request, roles=('ADMIN', 'OPERADOR'), at=now())
         equipment = reference(db, 'equipment', data.get('equipment_id'))
         if equipment['status'] in ('BAIXADO', 'MANUTENCAO'):
             fail('O patrimônio não está disponível para abrir manutenção.', 409)
@@ -683,8 +740,9 @@ def open_maintenance(data: dict, user=Depends(operator)):
 
 
 @app.post('/api/maintenance/{key}/close')
-def close_maintenance(key: int, data: dict, user=Depends(operator)):
+def close_maintenance(key: int, data: dict, request: Request, user=Depends(operator)):
     with connect(write=True) as db:
+        user = transaction_actor(db, request, roles=('ADMIN', 'OPERADOR'), at=now())
         row = reference(db, 'maintenance', key)
         if row['status'] != 'ABERTA':
             fail('Esta manutenção já foi concluída.', 409)
@@ -787,6 +845,7 @@ from .attendance.face import register_face_routes
 register_face_routes(app, administrator)
 
 
+
 @app.get('/ponto-facial', include_in_schema=False)
 def attendance_terminal_page():
     return FileResponse(STATIC / 'attendance-terminal.html', headers={'Cache-Control': 'no-store'})
@@ -795,3 +854,24 @@ def attendance_terminal_page():
 @app.get('/ponto-facial/configuracao', include_in_schema=False)
 def attendance_terminal_configuration(user=Depends(administrator)):
     return FileResponse(STATIC / 'attendance-admin.html', headers={'Cache-Control': 'no-store'})
+
+
+
+
+from .reporting import register_report_routes
+register_report_routes(app, current_user)
+
+from .import_workflows import register_import_routes
+register_import_routes(app, {
+    'connect': lambda write=False: connect(write=write),
+    'current_user': current_user, 'operator': operator,
+    'transaction_actor': lambda *args, **kwargs: transaction_actor(*args, **kwargs),
+    'validate_entity': lambda *args, **kwargs: validate_entity(*args, **kwargs),
+    'perform_movement': lambda *args, **kwargs: perform_movement(*args, **kwargs),
+    'audit': lambda *args, **kwargs: audit(*args, **kwargs), 'now': now,
+})
+
+
+@app.get('/documentos', include_in_schema=False)
+def documents_page(user=Depends(current_user)):
+    return FileResponse(STATIC / 'documents.html', headers={'Cache-Control': 'no-store'})

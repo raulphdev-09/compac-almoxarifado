@@ -1,12 +1,45 @@
-"""Origin validation and shared, short-lived credential failure limits."""
+"""Transaction authorization, origin checks and credential failure limits."""
 import hashlib
 import time
+from datetime import datetime, timezone
 from urllib.parse import urlsplit
+
+from fastapi import HTTPException
 
 
 FAILURE_WINDOW_SECONDS = 300
 ACCOUNT_FAILURE_LIMIT = 10
 ORIGIN_FAILURE_LIMIT = 30
+
+
+def transaction_actor(db, request, *, roles=None, at=None):
+    """Revalidate the cookie in the caller's transaction before effects/replay.
+
+    Protected writers must call this after acquiring their write lock. A
+    Depends result is only an early rejection, not authority for a later
+    transaction. Return public identity fields only, never password/token data.
+    """
+    cookie = request.cookies.get('compac_session', '')
+    if not isinstance(cookie, str) or not cookie or len(cookie) > 128:
+        raise HTTPException(401, 'Entre na sua conta para continuar.')
+    timestamp = at if at is not None else datetime.now(timezone.utc).isoformat()
+    fingerprint = hashlib.sha256(cookie.encode()).hexdigest()
+    row = db.execute(
+        'SELECT u.id,u.username,u.name,u.role,u.active FROM users u JOIN sessions s ON s.user_id=u.id '
+        'WHERE s.token_hash=? AND s.expires_at>? AND u.active=1',
+        (fingerprint, timestamp),
+    ).fetchone()
+    if not row:
+        raise HTTPException(401, 'Entre na sua conta para continuar.')
+    if roles is not None and row['role'] not in roles:
+        if tuple(roles) == ('ADMIN',):
+            detail = 'Esta ação exige um administrador.'
+        elif row['role'] == 'CONSULTA':
+            detail = 'Seu perfil permite apenas consulta.'
+        else:
+            detail = 'Seu perfil não permite esta ação.'
+        raise HTTPException(403, detail)
+    return dict(row)
 
 
 def origin(value, *, referer=False):
